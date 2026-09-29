@@ -58,7 +58,8 @@ export default function AnalysisPage() {
         probabilità di avere le fonti colorate entro il suo turno è almeno (89 + costo)%. Numero di terre: regressione di
         Karsten 19.59 + 1.90 × costo medio − 0.28 × pescate/ramp economici + 0.27 × companion. MDFC e carte con
         landcycling contano come mezza terra; le carte con riduzione di costo (Delve, Affinity, "costa {'{1}'} in meno
-        per ogni…") usano un costo effettivo stimato: simboli colorati più al massimo 1 generico.
+        per ogni…") usano un costo effettivo stimato: simboli colorati più al massimo 1 generico. Le carte con Madness
+        usano il costo di Madness se il mazzo ha almeno 8 carte che fanno scartare.
       </p>
     </div>
   );
@@ -227,7 +228,11 @@ function LandCount({ analysis }: { analysis: DeckAnalysis }) {
           <li>
             Costo effettivo stimato:{' '}
             <span className="text-stone-300">
-              {landCount.costReduced.map((c) => `${c.name} ${c.printed}→${c.effective}`).join(', ')}
+              {landCount.costReduced
+                .map((c) => `${c.name} ${c.printed}→${c.effective}${c.via ? ` (${c.via})` : ''}`)
+                .join(', ')}
+              {landCount.costReduced.some((c) => c.via === 'Madness') &&
+                ` · ${landCount.discardOutlets} carte per scartare nel mazzo`}
             </span>
           </li>
         )}

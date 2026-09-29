@@ -234,7 +234,24 @@ describe('carte giocabili solo in modo alternativo', () => {
     ]);
     // Lava Dart ha un flashback senza mana, ma dal cimitero: resta nel costo medio
     expect(a.landCount.excludedFromAverage.map((c) => c.name)).not.toContain('Lava Dart');
-    expect(a.landCount.averageManaValue).toBeCloseTo(62.2 / 35, 1);
+    // con Fiery Temper al costo di Madness: (62.2 - 4 × 2) / 35
+    expect(a.landCount.averageManaValue).toBeCloseTo(54.2 / 35, 1);
+  });
+
+  it('con abbastanza modi per scartare Fiery Temper usa il costo di Madness', () => {
+    const a = analyze(MONO_RED);
+    expect(a.landCount.discardOutlets).toBe(16);
+    expect(a.landCount.costReduced).toContainEqual({ name: 'Fiery Temper', quantity: 4, printed: 3, effective: 1, via: 'Madness' });
+    const temper = a.colors[0].checks.find((c) => c.card === 'Fiery Temper')!;
+    expect(temper).toMatchObject({ manaCost: '{R}', turn: 1, pips: 1 });
+    expect(a.landCount.recommended).toBeCloseTo(19.17, 1);
+  });
+
+  it('senza modi per scartare Fiery Temper resta a costo pieno', () => {
+    const a = analyze(`4 Fiery Temper\n4 Faithless Looting\n32 Lightning Bolt\n20 Mountain`);
+    expect(a.landCount.discardOutlets).toBe(4);
+    expect(a.landCount.costReduced).toEqual([]);
+    expect(a.colors[0].checks.find((c) => c.card === 'Fiery Temper')).toMatchObject({ manaCost: '{1}{R}{R}', turn: 3 });
   });
 
   it('senza alternative percorribili resta l\'errore', () => {

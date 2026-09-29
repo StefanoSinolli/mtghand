@@ -59,6 +59,7 @@ const syntheticBasic = (name: string, color: ManaSymbolColor): CardProfile => {
     land: { produces: [color], tapped: { kind: 'never' }, basicTypes: type ? [type] : [], isBasic: true, isMdfc: false },
     spells: [],
     altPlay: [],
+    discardOutlet: false,
     manaValue: null,
     cheapDrawOrRamp: false,
     isCompanion: false,

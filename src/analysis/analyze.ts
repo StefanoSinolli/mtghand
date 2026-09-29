@@ -14,7 +14,7 @@ import {
   type LandTotals,
   type RequirementCheck,
 } from './manaBase';
-import { keyColors } from './manaCost';
+import { keyColors, parseManaCost } from './manaCost';
 import { landDropProbability, openingHandLandDistribution } from './probability';
 import { optimizeBasics, type OptimizerProposal } from './optimizer';
 import { buildWarnings, type Warning } from './warnings';
@@ -27,9 +27,11 @@ export interface LandCountAdvice {
   cheapDrawOrRamp: Array<{ name: string; quantity: number }>;
   hasCompanion: boolean;
   /** Carte con costo ridotto contate al costo effettivo stimato */
-  costReduced: Array<{ name: string; quantity: number; printed: number; effective: number }>;
+  costReduced: Array<{ name: string; quantity: number; printed: number; effective: number; via?: string }>;
   /** Carte con landcycling contate come mezza terra */
   landcyclers: Array<{ name: string; quantity: number }>;
+  /** Carte nel main che fanno scartare (abilitano il Madness) */
+  discardOutlets: number;
   /** Carte escluse dal costo medio perché non richiedono terre (Fireblast, Sneaky Snacker in mono R) */
   excludedFromAverage: Array<{ name: string; quantity: number; reason: string }>;
 }
@@ -120,7 +122,7 @@ const landCountAdvice = (
   lands: LandTotals,
   companion: boolean,
   altOnly: ReadonlySet<string>,
-): LandCountAdvice => {
+): Omit<LandCountAdvice, 'discardOutlets'> => {
   let mvSum = 0;
   let mvCount = 0;
   const cheap: Array<{ name: string; quantity: number }> = [];
@@ -158,6 +160,7 @@ const landCountAdvice = (
         quantity: p.quantity,
         printed: p.spells[0].printedManaValue,
         effective: p.spells[0].manaValue,
+        via: p.spells[0].effectiveVia,
       })),
     landcyclers: profiles.filter((p) => p.landcycling).map((p) => ({ name: p.name, quantity: p.quantity })),
     excludedFromAverage,
@@ -234,15 +237,57 @@ export const findAltOnlyCards = (profiles: CardProfile[]): AltOnlyCard[] => {
   return result;
 };
 
+/** Carte che fanno scartare necessarie perché il Madness sia il modo abituale di lanciare una carta */
+export const MADNESS_OUTLET_THRESHOLD = 8;
+
+/**
+ * Con abbastanza modi per scartare, le carte con Madness si lanciano quasi sempre per il costo
+ * di Madness: la faccia principale usa quel costo se è più basso (Fiery Temper {1}{R}{R} → {R})
+ */
+export const applyMadness = (profiles: CardProfile[]) => {
+  const outlets = profiles.filter((p) => p.discardOutlet).reduce((s, p) => s + p.quantity, 0);
+  if (outlets < MADNESS_OUTLET_THRESHOLD) return { profiles, outlets };
+
+  const adjusted = profiles.map((p) => {
+    const madness = p.altPlay.find((a) => a.kind === 'cost' && a.label.startsWith('Madness'));
+    const face = p.spells[0];
+    if (!madness || !face || face.alternative) return p;
+
+    const cost = parseManaCost(madness.manaCost);
+    if (cost.manaValue >= face.manaValue) return p;
+
+    return {
+      ...p,
+      manaValue: p.manaValue === null ? null : Math.min(p.manaValue, cost.manaValue),
+      spells: [
+        {
+          ...face,
+          manaCost: madness.manaCost!,
+          manaValue: cost.manaValue,
+          turn: Math.max(1, cost.manaValue + cost.x),
+          pips: madness.pips!,
+          costReduced: true,
+          effectiveVia: 'Madness',
+        },
+        ...p.spells.slice(1),
+      ],
+    };
+  });
+
+  return { profiles: adjusted, outlets };
+};
+
 export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckAnalysis => {
-  const { profiles, sideProfiles, missing } = buildProfiles(deck, cards);
+  const built = buildProfiles(deck, cards);
+  const { sideProfiles, missing } = built;
+  const { profiles, outlets: discardOutlets } = applyMadness(built.profiles);
   const deckSize = deck.main.reduce((s, e) => s + e.quantity, 0);
 
   const lands = countLands(profiles);
   const hasCompanion = sideProfiles.some((p) => p.isCompanion);
   const altOnly = findAltOnlyCards(profiles);
   const excluded = new Set(altOnly.map((c) => c.card));
-  const landCount = landCountAdvice(profiles, lands, hasCompanion, excluded);
+  const landCount = { ...landCountAdvice(profiles, lands, hasCompanion, excluded), discardOutlets };
 
   const requirements = collectRequirements(profiles).filter((r) => !excluded.has(r.card));
   const checks = checkRequirements(profiles, deckSize, requirements);

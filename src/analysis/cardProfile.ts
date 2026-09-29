@@ -85,6 +85,8 @@ export interface SpellFace {
   printedManaValue: number;
   /** Delve, Affinity, Convoke, Improvise o "costa {1} in meno per ogni…" */
   costReduced: boolean;
+  /** Meccanica che giustifica il costo effettivo, se diversa dalla riduzione di costo (es. "Madness") */
+  effectiveVia?: string;
 }
 
 /**
@@ -117,6 +119,8 @@ export interface CardProfile {
   landcycling?: Landcycling;
   /** Modi alternativi di giocare la carta */
   altPlay: AltPlay[];
+  /** Ti fa scartare carte (Faithless Looting, Grab the Prize, Blood token…): abilita il Madness */
+  discardOutlet: boolean;
   spells: SpellFace[];
   /** Valore di mana usato per il costo medio del mazzo (null = escluso) */
   manaValue: number | null;
@@ -200,6 +204,17 @@ const buildSpellFace = (name: string, manaCost: string, alternative: boolean, or
 
 const LANDCYCLING = /\b(Plains|Island|Swamp|Mountain|Forest|Basic land|Land)cycling ((?:\{[^}]+\})+)/i;
 
+// "discard a card", "then discard two cards", Blood token "(… Discard a card …)".
+// Esclusi "each opponent discards" (terza persona) e "discard this card" (cycling, madness)
+const DISCARD = /\bdiscard (?:a|an|one|two|three|X|up to \w+|any number of) (?:\w+ )?cards?\b/i;
+
+/** Vero se la carta fa scartare te; scarta le frasi riferite agli avversari ("each opponent who didn't discard…") */
+const isDiscardOutlet = (oracle: string) =>
+  oracle.split(/[.;\n]/).some((sentence) => {
+    const match = sentence.match(DISCARD);
+    return match !== null && !/\b(opponent|player)s?\b/i.test(sentence.slice(0, match.index));
+  });
+
 const GRAVEYARD_KEYWORDS = new Set(['Flashback', 'Escape', 'Unearth', 'Disturb', 'Embalm', 'Eternalize', 'Encore']);
 
 const ALT_KEYWORDS =
@@ -262,6 +277,7 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
     card,
     spells: [],
     altPlay: [],
+    discardOutlet: false,
     manaValue: null,
     cheapDrawOrRamp: false,
     isCompanion: inSideboard && /^Companion —/m.test(front.oracle_text ?? card.oracle_text ?? ''),
@@ -290,6 +306,7 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
     const oracle = faces.map((f) => f.oracle_text ?? '').join('\n') || (card.oracle_text ?? '');
     profile.landcycling = profile.land ? undefined : parseLandcycling(oracle);
     profile.altPlay = parseAltPlay(oracle);
+    profile.discardOutlet = isDiscardOutlet(oracle);
 
     // Un landcycler si usa soprattutto come terra: la magia resta, ma come faccia alternativa
     profile.spells = castable.map((f, i) =>

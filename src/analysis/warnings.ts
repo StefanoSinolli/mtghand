@@ -169,7 +169,7 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
         a.landCount.excludedFromAverage.length > 0 &&
           `Escluse dal costo medio: ${a.landCount.excludedFromAverage.map((c) => c.name).join(', ')}.`,
         a.landCount.costReduced.length > 0 &&
-          `Costo effettivo stimato per ${a.landCount.costReduced.map((c) => `${c.name} (${c.printed}→${c.effective})`).join(', ')}.`,
+          `Costo effettivo stimato per ${a.landCount.costReduced.map((c) => `${c.name} (${c.printed}→${c.effective}${c.via ? ` con ${c.via}` : ''})`).join(', ')}.`,
       ]
         .filter(Boolean)
         .join(' '),

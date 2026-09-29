@@ -147,3 +147,17 @@ describe('modi alternativi di giocare una carta', () => {
     expect(labels('Lightning Bolt')).toEqual([]);
   });
 });
+
+describe('modi per scartare', () => {
+  it('riconosce le carte che ti fanno scartare', () => {
+    for (const name of ['Faithless Looting', 'Grab the Prize', 'Highway Robbery', "Sazacap's Brew", 'Voldaren Epicure']) {
+      expect(profile(name).discardOutlet, name).toBe(true);
+    }
+  });
+
+  it('ignora gli scarti dell\'avversario e lo scarto della carta stessa', () => {
+    for (const name of ['Lightning Bolt', 'Fiery Temper', 'Street Wraith', "Kroxa, Titan of Death's Hunger", 'Striped Riverwinder']) {
+      expect(profile(name).discardOutlet, name).toBe(false);
+    }
+  });
+});
