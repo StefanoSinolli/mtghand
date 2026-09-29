@@ -1,0 +1,1096 @@
+[
+ {
+  "id": "7673784e-db4b-43a1-8d55-1bb9fc1e284f",
+  "name": "Lightning Bolt",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "d6bfa227-4309-40ed-952c-279595eab17e",
+  "name": "Monastery Swiftspear",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Monk",
+  "oracle_text": "Haste\nProwess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "3c0f5411-1940-410f-96ce-6f92513f753a",
+  "name": "Goblin Guide",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Creature — Goblin Scout",
+  "oracle_text": "Haste\nWhenever this creature attacks, defending player reveals the top card of their library. If it's a land card, that player puts it into their hand.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "2a844b96-6616-4c39-8f4f-5d14a3b2bd55",
+  "name": "Mountain",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land — Mountain",
+  "oracle_text": "({T}: Add {R}.)",
+  "colors": [],
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "R"
+  ]
+ },
+ {
+  "id": "f3cc07cd-cc79-4745-b0b7-eade60175cc3",
+  "name": "Island",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land — Island",
+  "oracle_text": "({T}: Add {U}.)",
+  "colors": [],
+  "color_identity": [
+   "U"
+  ],
+  "produced_mana": [
+   "U"
+  ]
+ },
+ {
+  "id": "dce15387-4114-4b3e-91aa-5b42b45c44ac",
+  "name": "Forest",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land — Forest",
+  "oracle_text": "({T}: Add {G}.)",
+  "colors": [],
+  "color_identity": [
+   "G"
+  ],
+  "produced_mana": [
+   "G"
+  ]
+ },
+ {
+  "id": "8ab0f4c0-b331-4c57-b68f-2e24bb5ba06c",
+  "name": "Plains",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land — Plains",
+  "oracle_text": "({T}: Add {W}.)",
+  "colors": [],
+  "color_identity": [
+   "W"
+  ],
+  "produced_mana": [
+   "W"
+  ]
+ },
+ {
+  "id": "b7387103-1df1-4fd0-9e91-1544509792c7",
+  "name": "Swamp",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land — Swamp",
+  "oracle_text": "({T}: Add {B}.)",
+  "colors": [],
+  "color_identity": [
+   "B"
+  ],
+  "produced_mana": [
+   "B"
+  ]
+ },
+ {
+  "id": "c36820fa-ee86-4206-9a0d-737a67cf5208",
+  "name": "Sunbaked Canyon",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Pay 1 life: Add {R} or {W}.\n{1}, {T}, Sacrifice this land: Draw a card.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "W"
+  ],
+  "produced_mana": [
+   "R",
+   "W"
+  ]
+ },
+ {
+  "id": "f231caf8-56c0-4719-a90d-5e5efbee3148",
+  "name": "Den of the Bugbear",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "If you control two or more other lands, this land enters tapped.\n{T}: Add {R}.\n{3}{R}: Until end of turn, this land becomes a 3/2 red Goblin creature with \"Whenever this creature attacks, create a 1/1 red Goblin creature token that's tapped and attacking.\" It's still a land.",
+  "colors": [],
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "R"
+  ]
+ },
+ {
+  "id": "4f616706-ec97-4923-bb1e-11a69fbaa1f8",
+  "name": "Counterspell",
+  "layout": "normal",
+  "mana_cost": "{U}{U}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Counter target spell.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "96f866ec-a163-4095-b088-d93fa0b6f6f7",
+  "name": "Expressive Iteration",
+  "layout": "normal",
+  "mana_cost": "{U}{R}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Look at the top three cards of your library. Put one of them into your hand, put one of them on the bottom of your library, and exile one of them. You may play the exiled card this turn.",
+  "colors": [
+   "R",
+   "U"
+  ],
+  "color_identity": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "a83903c7-fd51-4526-aed2-359e946fea36",
+  "name": "Steam Vents",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land — Island Mountain",
+  "oracle_text": "({T}: Add {U} or {R}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "59a04e16-a767-4112-ab01-6ca1b09c286c",
+  "name": "Spirebluff Canal",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {U} or {R}.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "71e491c5-8c07-449b-b2f1-ffa052e6d311",
+  "name": "Scalding Tarn",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "25ac5405-df7b-4097-914a-022cb18e20d4",
+  "name": "Arid Mesa",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "d5e141ad-5cb8-416b-9acf-bce1baeb6b6b",
+  "name": "Izzet Signet",
+  "layout": "normal",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Artifact",
+  "oracle_text": "{1}, {T}: Add {U}{R}.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "6a0b230b-d391-4998-a3f7-7b158a0ec2cd",
+  "name": "Llanowar Elves",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Creature — Elf Druid",
+  "oracle_text": "{T}: Add {G}.",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "produced_mana": [
+   "G"
+  ]
+ },
+ {
+  "id": "18303862-4726-4136-814f-157aa7006579",
+  "name": "Fire // Ice",
+  "layout": "split",
+  "mana_cost": "{1}{R} // {1}{U}",
+  "cmc": 4.0,
+  "type_line": "Instant // Instant",
+  "colors": [
+   "R",
+   "U"
+  ],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Fire",
+    "mana_cost": "{1}{R}",
+    "type_line": "Instant",
+    "oracle_text": "Fire deals 2 damage divided as you choose among one or two targets."
+   },
+   {
+    "name": "Ice",
+    "mana_cost": "{1}{U}",
+    "type_line": "Instant",
+    "oracle_text": "Tap target permanent.\nDraw a card."
+   }
+  ]
+ },
+ {
+  "id": "b5b71cd2-de35-451f-b16e-2e3936169407",
+  "name": "Bonecrusher Giant // Stomp",
+  "layout": "adventure",
+  "mana_cost": "{2}{R} // {1}{R}",
+  "cmc": 3.0,
+  "type_line": "Creature — Giant // Instant — Adventure",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "card_faces": [
+   {
+    "name": "Bonecrusher Giant",
+    "mana_cost": "{2}{R}",
+    "type_line": "Creature — Giant",
+    "oracle_text": "Whenever this creature becomes the target of a spell, this creature deals 2 damage to that spell's controller."
+   },
+   {
+    "name": "Stomp",
+    "mana_cost": "{1}{R}",
+    "type_line": "Instant — Adventure",
+    "oracle_text": "Damage can't be prevented this turn. Stomp deals 2 damage to any target."
+   }
+  ]
+ },
+ {
+  "id": "24c0d87b-0049-4beb-b9cb-6f813b7aa7dc",
+  "name": "Fable of the Mirror-Breaker // Reflection of Kiki-Jiki",
+  "layout": "transform",
+  "cmc": 3.0,
+  "type_line": "Enchantment — Saga // Enchantment Creature — Goblin Shaman",
+  "color_identity": [
+   "R"
+  ],
+  "card_faces": [
+   {
+    "name": "Fable of the Mirror-Breaker",
+    "mana_cost": "{2}{R}",
+    "type_line": "Enchantment — Saga",
+    "oracle_text": "(As this Saga enters and after your draw step, add a lore counter.)\nI — Create a 2/2 red Goblin Shaman creature token with \"Whenever this token attacks, create a Treasure token.\"\nII — You may discard up to two cards. If you do, draw that many cards.\nIII — Exile this Saga, then return it to the battlefield transformed under your control.",
+    "colors": [
+     "R"
+    ]
+   },
+   {
+    "name": "Reflection of Kiki-Jiki",
+    "mana_cost": "",
+    "type_line": "Enchantment Creature — Goblin Shaman",
+    "oracle_text": "{1}, {T}: Create a token that's a copy of another target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.",
+    "colors": [
+     "R"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "bc7239ea-f8aa-4a6f-87bd-c35359635673",
+  "name": "Shatterskull Smashing // Shatterskull, the Hammer Pass",
+  "layout": "modal_dfc",
+  "cmc": 2.0,
+  "type_line": "Sorcery // Land",
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "R"
+  ],
+  "card_faces": [
+   {
+    "name": "Shatterskull Smashing",
+    "mana_cost": "{X}{R}{R}",
+    "type_line": "Sorcery",
+    "oracle_text": "Shatterskull Smashing deals X damage divided as you choose among up to two target creatures and/or planeswalkers. If X is 6 or more, Shatterskull Smashing deals twice X damage divided as you choose among them instead.",
+    "colors": [
+     "R"
+    ]
+   },
+   {
+    "name": "Shatterskull, the Hammer Pass",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {R}.",
+    "colors": []
+   }
+  ]
+ },
+ {
+  "id": "c0318a48-30e4-4ef7-be3d-5e561c5ce428",
+  "name": "Evolving Wilds",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "3bfa5ebc-5623-4eec-89ea-dc187489ee4a",
+  "name": "Snow-Covered Island",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Snow Land — Island",
+  "oracle_text": "({T}: Add {U}.)",
+  "colors": [],
+  "color_identity": [
+   "U"
+  ],
+  "produced_mana": [
+   "U"
+  ]
+ },
+ {
+  "id": "20c4aae1-7665-4df7-bd51-a1d95bf8a17d",
+  "name": "Murktide Regent",
+  "layout": "normal",
+  "mana_cost": "{5}{U}{U}",
+  "cmc": 7.0,
+  "type_line": "Creature — Dragon",
+  "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nFlying\nThis creature enters with a +1/+1 counter on it for each instant and sorcery card exiled with it.\nWhenever an instant or sorcery card leaves your graveyard, put a +1/+1 counter on this creature.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "a9738cda-adb1-47fb-9f4c-ecd930228c4d",
+  "name": "Ragavan, Nimble Pilferer",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Legendary Creature — Monkey Pirate",
+  "oracle_text": "Whenever Ragavan deals combat damage to a player, create a Treasure token and exile the top card of that player's library. Until end of turn, you may cast that card.\nDash {1}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "4ced112a-e775-4f97-97b3-74877e9dce12",
+  "name": "Dragon's Rage Channeler",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Shaman",
+  "oracle_text": "Whenever you cast a noncreature spell, surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)\nDelirium — As long as there are four or more card types among cards in your graveyard, this creature gets +2/+2, has flying, and attacks each combat if able.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "4f28e706-c488-4525-ad8a-977a5fa77f80",
+  "name": "Consider",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\nDraw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "bbc99a51-1501-4525-a3cc-f48249b64bed",
+  "name": "Opt",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Scry 1. (Look at the top card of your library. You may put that card on the bottom.)\nDraw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "45bbbf9b-8fee-4c32-a513-02dac6ac8a39",
+  "name": "Mishra's Bauble",
+  "layout": "normal",
+  "mana_cost": "{0}",
+  "cmc": 0.0,
+  "type_line": "Artifact",
+  "oracle_text": "{T}, Sacrifice this artifact: Look at the top card of target player's library. Draw a card at the beginning of the next turn's upkeep.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "c1e0f201-42cb-46a1-901a-65bb4fc18f6c",
+  "name": "Urza's Saga",
+  "layout": "saga",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Enchantment Land — Urza's Saga",
+  "oracle_text": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — This Saga gains \"{T}: Add {C}.\"\nII — This Saga gains \"{2}, {T}: Create a 0/0 colorless Construct artifact creature token with 'This token gets +1/+1 for each artifact you control.'\"\nIII — Search your library for an artifact card with mana cost {0} or {1}, put it onto the battlefield, then shuffle.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ]
+ },
+ {
+  "id": "baf8f4f2-9f25-4cd2-8d78-1041e134aeac",
+  "name": "Wastes",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Basic Land",
+  "oracle_text": "{T}: Add {C}.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ]
+ },
+ {
+  "id": "461987da-8860-4a04-8f93-d182523ca311",
+  "name": "Gut Shot",
+  "layout": "normal",
+  "mana_cost": "{R/P}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "({R/P} can be paid with either {R} or 2 life.)\nGut Shot deals 1 damage to any target.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "a844d537-df73-422d-a154-f1c6b92d0469",
+  "name": "Kitchen Finks",
+  "layout": "normal",
+  "mana_cost": "{1}{G/W}{G/W}",
+  "cmc": 3.0,
+  "type_line": "Creature — Ouphe",
+  "oracle_text": "When this creature enters, you gain 2 life.\nPersist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)",
+  "colors": [
+   "G",
+   "W"
+  ],
+  "color_identity": [
+   "G",
+   "W"
+  ]
+ },
+ {
+  "id": "9964629e-d79e-46e4-b3fd-e7d1759cbc60",
+  "name": "Spectral Procession",
+  "layout": "normal",
+  "mana_cost": "{2/W}{2/W}{2/W}",
+  "cmc": 6.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Create three 1/1 white Spirit creature tokens with flying.",
+  "colors": [
+   "W"
+  ],
+  "color_identity": [
+   "W"
+  ]
+ },
+ {
+  "id": "5ad36fb2-c44e-4085-ba0d-54277841ad3a",
+  "name": "Lurrus of the Dream-Den",
+  "layout": "normal",
+  "mana_cost": "{1}{W/B}{W/B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — Cat Nightmare",
+  "oracle_text": "Companion — Each permanent card in your starting deck has mana value 2 or less. (If this card is your chosen companion, you may put it into your hand from outside the game for {3} as a sorcery.)\nLifelink\nOnce during each of your turns, you may cast a permanent spell with mana value 2 or less from your graveyard.",
+  "colors": [
+   "B",
+   "W"
+  ],
+  "color_identity": [
+   "B",
+   "W"
+  ]
+ },
+ {
+  "id": "df45a43e-a5b7-4fd4-873b-7b3c021be198",
+  "name": "Fireball",
+  "layout": "normal",
+  "mana_cost": "{X}{R}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "This spell costs {1} more to cast for each target beyond the first.\nFireball deals X damage divided evenly, rounded down, among any number of targets.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "11e12a84-e7be-4afc-a230-c2e644743fa8",
+  "name": "Dark Ritual",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Add {B}{B}{B}.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "produced_mana": [
+   "B"
+  ]
+ },
+ {
+  "id": "d86fa72c-25c1-43ef-9cb0-fe76f7568ed3",
+  "name": "Deadly Dispute",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "As an additional cost to cast this spell, sacrifice an artifact or creature.\nDraw two cards and create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ {
+  "id": "861caabb-0573-4e94-8b03-342f90465064",
+  "name": "Blooming Marsh",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {B} or {G}.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "produced_mana": [
+   "B",
+   "G"
+  ]
+ },
+ {
+  "id": "79c21c1f-eaa4-454d-a1c7-b41466d0a428",
+  "name": "Lava Spike",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Sorcery — Arcane",
+  "oracle_text": "Lava Spike deals 3 damage to target player or planeswalker.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "4ccd0ada-92b2-48f3-b5ae-96346fc138b6",
+  "name": "Rift Bolt",
+  "layout": "normal",
+  "mana_cost": "{2}{R}",
+  "cmc": 3.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Rift Bolt deals 3 damage to any target.\nSuspend 1—{R} (Rather than cast this card from your hand, you may pay {R} and exile it with a time counter on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "183ef738-0559-49ca-85b4-e6836521f203",
+  "name": "Eidolon of the Great Revel",
+  "layout": "normal",
+  "mana_cost": "{R}{R}",
+  "cmc": 2.0,
+  "type_line": "Enchantment Creature — Spirit",
+  "oracle_text": "Whenever a player casts a spell with mana value 3 or less, this creature deals 2 damage to that player.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "43ca8f80-e9ed-483f-a8a7-ad6149811df9",
+  "name": "Skewer the Critics",
+  "layout": "normal",
+  "mana_cost": "{2}{R}",
+  "cmc": 3.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Spectacle {R} (You may cast this spell for its spectacle cost rather than its mana cost if an opponent lost life this turn.)\nSkewer the Critics deals 3 damage to any target.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "912b94c9-7200-452d-940f-df0a7cceb377",
+  "name": "Light Up the Stage",
+  "layout": "normal",
+  "mana_cost": "{2}{R}",
+  "cmc": 3.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Spectacle {R} (You may cast this spell for its spectacle cost rather than its mana cost if an opponent lost life this turn.)\nExile the top two cards of your library. Until the end of your next turn, you may play those cards.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "bb43fd07-d281-447d-88bf-c53498c2cf20",
+  "name": "Searing Blood",
+  "layout": "normal",
+  "mana_cost": "{R}{R}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Searing Blood deals 2 damage to target creature. When that creature dies this turn, Searing Blood deals 3 damage to the creature's controller.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "0b057eb7-8439-4d26-89df-c345ab2773e1",
+  "name": "Roiling Vortex",
+  "layout": "normal",
+  "mana_cost": "{1}{R}",
+  "cmc": 2.0,
+  "type_line": "Enchantment",
+  "oracle_text": "At the beginning of each player's upkeep, this enchantment deals 1 damage to them.\nWhenever a player casts a spell, if no mana was spent to cast that spell, this enchantment deals 5 damage to that player.\n{R}: Your opponents can't gain life this turn.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "4e879386-b1f8-4f2a-9820-6e1291746f88",
+  "name": "Unholy Heat",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Unholy Heat deals 2 damage to target creature or planeswalker.\nDelirium — Unholy Heat deals 6 damage instead if there are four or more card types among cards in your graveyard.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "e37da81e-be12-45a2-9128-376f1ad7b3e8",
+  "name": "Prismatic Vista",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "76edd22f-808e-4a7c-b941-13c0f5e30418",
+  "name": "Fabled Passage",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. Then if you control four or more lands, untap that land.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "4afee6b3-55a4-44e5-b08c-85e0c813cd09",
+  "name": "Thought Scour",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Target player mills two cards.\nDraw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "30f6fca9-003b-4f6b-9d6e-1e88adda4155",
+  "name": "Cryptic Command",
+  "layout": "normal",
+  "mana_cost": "{1}{U}{U}{U}",
+  "cmc": 4.0,
+  "type_line": "Instant",
+  "oracle_text": "Choose two —\n• Counter target spell.\n• Return target permanent to its owner's hand.\n• Tap all creatures your opponents control.\n• Draw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "22b36ad5-bf4d-436a-9c3c-fa4acd0052fe",
+  "name": "Snapcaster Mage",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Wizard",
+  "oracle_text": "Flash\nWhen this creature enters, target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (You may cast that card from your graveyard for its flashback cost. Then exile it.)",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "492c2f9a-51e7-4e0f-9899-23bf43ea988b",
+  "name": "Birds of Paradise",
+  "layout": "normal",
+  "mana_cost": "{G}",
+  "cmc": 1.0,
+  "type_line": "Creature — Bird",
+  "oracle_text": "Flying\n{T}: Add one mana of any color.",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ {
+  "id": "c6b6117c-faab-4bbb-b851-07bd8061ef03",
+  "name": "Arcane Signet",
+  "layout": "normal",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Artifact",
+  "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ]
+ },
+ {
+  "id": "b30a8f92-ce42-4b27-a893-bcf97fde228d",
+  "name": "Mind Stone",
+  "layout": "normal",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Artifact",
+  "oracle_text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ]
+ },
+ {
+  "id": "d4ba86c8-8052-4c9e-a0d0-ac6ad0b2679c",
+  "name": "Talisman of Creativity",
+  "layout": "normal",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Artifact",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {R}. This artifact deals 1 damage to you.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "C",
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "d8c5e52d-57ae-464b-8860-7dd39ebfef64",
+  "name": "Frantic Search",
+  "layout": "normal",
+  "mana_cost": "{2}{U}",
+  "cmc": 3.0,
+  "type_line": "Instant",
+  "oracle_text": "Draw two cards, then discard two cards. Untap up to three lands.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "2b20fa73-c6de-49c1-b3d0-6ebd543a00d0",
+  "name": "Sulfur Falls",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control an Island or a Mountain.\n{T}: Add {U} or {R}.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "486d7edc-d983-41f0-8b78-c99aecd72996",
+  "name": "Otawara, Soaring City",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {U}.\nChannel — {3}{U}, Discard this card: Return target artifact, creature, enchantment, or planeswalker to its owner's hand. This ability costs {1} less to activate for each legendary creature you control.",
+  "colors": [],
+  "color_identity": [
+   "U"
+  ],
+  "produced_mana": [
+   "U"
+  ]
+ },
+ {
+  "id": "2135ac5a-187b-4dc9-8f82-34e8d1603416",
+  "name": "Boseiju, Who Endures",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Legendary Land",
+  "oracle_text": "{T}: Add {G}.\nChannel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each legendary creature you control.",
+  "colors": [],
+  "color_identity": [
+   "G"
+  ],
+  "produced_mana": [
+   "G"
+  ]
+ },
+ {
+  "id": "bffc360e-db41-48f3-9365-680d55046e04",
+  "name": "Thought-Knot Seer",
+  "layout": "normal",
+  "mana_cost": "{3}{C}",
+  "cmc": 4.0,
+  "type_line": "Creature — Eldrazi",
+  "oracle_text": "({C} represents colorless mana.)\nWhen this creature enters, target opponent reveals their hand. You choose a nonland card from it and exile that card.\nWhen this creature leaves the battlefield, target opponent draws a card.",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "cbab7e1f-305e-4733-aa70-b27285740925",
+  "name": "Eldrazi Temple",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {C}{C}. Spend this mana only to cast colorless Eldrazi spells or activate abilities of colorless Eldrazi.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ]
+ },
+ {
+  "id": "b6de14ae-0132-4261-af00-630bf15918cd",
+  "name": "Barkchannel Pathway // Tidechannel Pathway",
+  "layout": "modal_dfc",
+  "cmc": 0.0,
+  "type_line": "Land // Land",
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "produced_mana": [
+   "G",
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Barkchannel Pathway",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "{T}: Add {G}.",
+    "colors": []
+   },
+   {
+    "name": "Tidechannel Pathway",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "{T}: Add {U}.",
+    "colors": []
+   }
+  ]
+ },
+ {
+  "id": "a69541db-3f4e-412f-aa8e-dec1e74f74dc",
+  "name": "Spikefield Hazard // Spikefield Cave",
+  "layout": "modal_dfc",
+  "cmc": 1.0,
+  "type_line": "Instant // Land",
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "R"
+  ],
+  "card_faces": [
+   {
+    "name": "Spikefield Hazard",
+    "mana_cost": "{R}",
+    "type_line": "Instant",
+    "oracle_text": "Spikefield Hazard deals 1 damage to any target. If a permanent dealt damage this way would die this turn, exile it instead.",
+    "colors": [
+     "R"
+    ]
+   },
+   {
+    "name": "Spikefield Cave",
+    "mana_cost": "",
+    "type_line": "Land",
+    "oracle_text": "This land enters tapped.\n{T}: Add {R}.",
+    "colors": []
+   }
+  ]
+ }
+]

@@ -17,9 +17,10 @@ import './Hand.css';
 
 interface HandProps {
   deck: Deck;
+  onAnalyze: () => void;
 }
 
-export default function Hand({ deck }: HandProps) {
+export default function Hand({ deck, onAnalyze }: HandProps) {
   const { loading, error, missing, getCard } = useDeckCards(deck);
   const [game, setGame] = useState<HandState>(() => newGame(deck.main));
   const [detailsCard, setDetailsCard] = useState<DisplayCard | null>(null);
@@ -47,6 +48,9 @@ export default function Hand({ deck }: HandProps) {
           <span>Carte in mano: {game.phase === 'bottoming' ? game.hand.length - toBottom : game.hand.length}</span>
           <span>Carte in biblioteca: {game.library.length}</span>
         </div>
+        <button className="btn-secondary btn-analyze" onClick={onAnalyze}>
+          📊 Analizza mana base
+        </button>
       </div>
 
       {error && <div className="bottoming-notice">⚠️ {error}: le immagini non sono disponibili</div>}

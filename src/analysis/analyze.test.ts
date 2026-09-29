@@ -1,0 +1,159 @@
+import { describe, expect, it } from 'vitest';
+import { analyzeDeck, karstenLandCount } from './analyze';
+import { deckFrom, fixtureCards } from './__fixtures__/load';
+
+const BURN_SPELLS = `4 Lightning Bolt
+4 Monastery Swiftspear
+4 Eidolon of the Great Revel
+4 Goblin Guide
+4 Lava Spike
+4 Rift Bolt
+4 Skewer the Critics
+2 Light Up the Stage
+2 Searing Blood
+2 Roiling Vortex`;
+
+const analyze = (text: string) => analyzeDeck(deckFrom(text), fixtureCards);
+const ids = (text: string) => analyze(text).warnings.map((w) => `${w.severity}:${w.id}`);
+
+describe('formula delle terre', () => {
+  it('applica la regressione di Karsten', () => {
+    expect(karstenLandCount(2.8, 0, false)).toBeCloseTo(24.91, 2);
+    expect(karstenLandCount(2, 4, true)).toBeCloseTo(19.59 + 3.8 - 1.12 + 0.27, 5);
+  });
+});
+
+describe('mono rosso', () => {
+  const clean = `${BURN_SPELLS}\n20 Mountain\n4 Sunbaked Canyon\n2 Den of the Bugbear`;
+
+  it('non segnala problemi di colore in un mono rosso pulito', () => {
+    const a = analyze(clean);
+    expect(a.missing).toEqual([]);
+    expect(a.deckSize).toBe(60);
+    expect(a.colors.map((c) => c.key)).toEqual(['R']);
+    expect(a.colors[0].ok).toBe(true);
+    expect(a.warnings.filter((w) => w.id.startsWith('color-') || w.id.startsWith('off-color'))).toEqual([]);
+  });
+
+  it('segnala 26 terre come troppe per un burn con costo medio basso', () => {
+    const a = analyze(clean);
+    expect(a.landCount.averageManaValue).toBeCloseTo(1.82, 2);
+    expect(a.landCount.recommended).toBeCloseTo(23.05, 1);
+    expect(a.warnings.find((w) => w.id === 'land-count')).toMatchObject({ severity: 'warning' });
+  });
+
+  it("segnala l'Isola in un mazzo mono rosso e l'optimizer la sostituisce", () => {
+    const a = analyze(`${BURN_SPELLS}\n19 Mountain\n1 Island\n4 Sunbaked Canyon\n2 Den of the Bugbear`);
+    const island = a.warnings.find((w) => w.id === 'off-color-Island');
+    expect(island).toMatchObject({ severity: 'warning' });
+    expect(island!.title).toContain('blu');
+
+    expect(a.optimizer!.changes).toEqual(
+      expect.arrayContaining([
+        { name: 'Island', from: 1, to: 0 },
+        { name: 'Mountain', from: 19, to: 20 },
+      ]),
+    );
+  });
+});
+
+describe('Izzet', () => {
+  const IZZET_SPELLS = `4 Counterspell
+4 Expressive Iteration
+4 Consider
+4 Lightning Bolt
+4 Murktide Regent
+4 Dragon's Rage Channeler
+4 Ragavan, Nimble Pilferer
+4 Unholy Heat
+4 Thought Scour
+2 Cryptic Command`;
+
+  it('dà errore se ci sono solo 2 fonti di blu', () => {
+    const a = analyze(`${IZZET_SPELLS}\n2 Island\n16 Mountain`);
+    const blue = a.warnings.find((w) => w.id === 'color-U');
+    expect(blue).toMatchObject({ severity: 'error' });
+    expect(blue!.title).toMatch(/^Blu: 2 fonti\. (Counterspell|Cryptic Command)/);
+
+    // L'optimizer ridistribuisce le base a favore del blu
+    const blueAfter = a.optimizer!.sources.find((s) => s.key === 'U')!;
+    expect(blueAfter.before).toBe(2);
+    expect(blueAfter.after).toBeGreaterThan(8);
+    expect(a.optimizer!.after.deficit).toBeLessThan(a.optimizer!.before.deficit);
+  });
+
+  it('conta fetch e dual come fonti di entrambi i colori', () => {
+    const a = analyze(`${IZZET_SPELLS}\n4 Steam Vents\n4 Spirebluff Canal\n4 Scalding Tarn\n2 Sulfur Falls\n3 Island\n1 Mountain`);
+    const blue = a.colors.find((c) => c.key === 'U')!;
+    const red = a.colors.find((c) => c.key === 'R')!;
+    expect(blue.landSources).toBe(17);
+    expect(red.landSources).toBe(15);
+  });
+
+  it('non conta una fetch che non può cercare nessuna terra del mazzo', () => {
+    const a = analyze(`${IZZET_SPELLS}\n4 Arid Mesa\n10 Island\n4 Mountain`);
+    const red = a.colors.find((c) => c.key === 'R')!;
+    // Arid Mesa cerca Mountain o Plains: con i Mountain presenti conta come rosso, non come blu
+    expect(red.landSources).toBe(8);
+    expect(a.colors.find((c) => c.key === 'U')!.landSources).toBe(10);
+
+    const noMountain = analyze(`4 Counterspell\n4 Arid Mesa\n16 Island`);
+    expect(noMountain.colors.find((c) => c.key === 'U')!.landSources).toBe(16);
+    expect(noMountain.warnings.find((w) => w.id === 'colorless')?.cards).toContain('Arid Mesa');
+  });
+});
+
+describe('fonti non-terra', () => {
+  it('Izzet Signet aiuta le carte da 3+ ma non quelle da 2', () => {
+    const a = analyze(`4 Counterspell\n4 Cryptic Command\n4 Izzet Signet\n12 Island\n10 Mountain`);
+    const blue = a.colors.find((c) => c.key === 'U')!;
+    const counterspell = blue.checks.find((c) => c.card === 'Counterspell')!;
+    const cryptic = blue.checks.find((c) => c.card === 'Cryptic Command')!;
+    expect(counterspell.sources.support).toBe(0);
+    expect(cryptic.sources.support).toBe(4);
+    expect(a.warnings.find((w) => w.id === 'support-sources')).toBeDefined();
+  });
+});
+
+describe('mano iniziale', () => {
+  it('calcola probabilità coerenti', () => {
+    const a = analyze(`36 Lightning Bolt\n24 Mountain`);
+    expect(a.openingHand.distribution[0]).toBeCloseTo(0.0216, 3);
+    expect(a.openingHand.keepable + a.openingHand.screw + a.openingHand.flood).toBeCloseTo(1, 10);
+    expect(a.openingHand.landDrops[2].play).toBeCloseTo(0.7887, 3);
+    expect(a.openingHand.landDrops[2].draw).toBeGreaterThan(a.openingHand.landDrops[2].play);
+  });
+
+  it('segnala un mazzo con poche terre', () => {
+    expect(ids(`45 Lightning Bolt\n15 Mountain`)).toContain('warning:screw');
+  });
+});
+
+describe('robustezza', () => {
+  it('segnala carte non trovate e mazzi troppo piccoli', () => {
+    const w = ids(`4 Lightning Blot\n20 Mountain`);
+    expect(w).toContain('warning:missing-cards');
+    expect(w).toContain('error:deck-size');
+  });
+
+  it('gestisce un mazzo senza terre', () => {
+    expect(ids(`60 Lightning Bolt`)).toContain('error:no-lands');
+  });
+});
+
+describe('optimizer', () => {
+  it('non propone modifiche se la mana base soddisfa già tutto', () => {
+    const a = analyze(
+      `4 Counterspell\n4 Expressive Iteration\n4 Consider\n4 Opt\n4 Lightning Bolt\n4 Murktide Regent\n4 Dragon's Rage Channeler\n4 Ragavan, Nimble Pilferer\n4 Unholy Heat\n4 Thought Scour\n2 Cryptic Command\n4 Steam Vents\n4 Spirebluff Canal\n4 Scalding Tarn\n2 Sulfur Falls\n3 Island\n1 Mountain`,
+    );
+    expect(a.deckSize).toBe(60);
+    expect(a.colors.every((c) => c.ok)).toBe(true);
+    expect(a.optimizer!.changes).toEqual([]);
+    expect(a.optimizer!.feasible).toBe(true);
+  });
+
+  it('segnala quando servono terre doppie', () => {
+    const a = analyze(`8 Counterspell\n8 Lightning Bolt\n4 Cryptic Command\n4 Murktide Regent\n16 Consider\n2 Island\n18 Mountain`);
+    expect(a.optimizer!.feasible).toBe(false);
+  });
+});

@@ -1,0 +1,13 @@
+.mana-cost-symbols {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.mana-symbol {
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 50%;
+  box-shadow: -1px 1px 0 rgba(0, 0, 0, 0.35);
+}

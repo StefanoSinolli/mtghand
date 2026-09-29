@@ -8,6 +8,12 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 - ✅ Visualizzazione delle carte con immagini da Scryfall
 - ✅ Pesca mano iniziale di 7 carte
 - ✅ Mulligan London: Mulligan/Keep, poi scelta delle carte da mettere in fondo
+- ✅ Analisi della mana base su richiesta:
+  - fonti per colore rispetto alle soglie di Frank Karsten (fetch, dual, MDFC, Signet e dork inclusi)
+  - warning su terre fuori colore, colori sotto soglia, terre tappate o incolori
+  - numero di terre consigliato (formula di Karsten) e probabilità della mano iniziale
+  - distribuzione ottimale delle terre base, applicabile al mazzo con un clic
+  - simulazione Monte Carlo di 10.000 partite in un Web Worker
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi
 
@@ -44,7 +50,7 @@ Il parser supporta i formati standard:
 
 ## 📋 Esempio Decklist di Test
 
-Usa il file `example-deck.txt` oppure questa decklist:
+Usa i file in `example-decks/` oppure questa decklist:
 
 ```
 4 Lightning Bolt
@@ -68,13 +74,24 @@ Usa il file `example-deck.txt` oppure questa decklist:
 src/
 ├── components/            # Componenti React
 │   ├── Card.tsx           # Singola carta MTG
+│   ├── Analysis.tsx       # Pannello di analisi della mana base
 │   ├── CardDetails.tsx    # Modale con i dettagli della carta
 │   ├── DeckImport.tsx     # Importazione / creazione mazzi
 │   └── Hand.tsx           # Simulatore mano iniziale
+├── analysis/              # Analisi mana base (funzioni pure + test)
+│   ├── analyze.ts         # Orchestratore: DeckAnalysis
+│   ├── cardProfile.ts     # Classificazione carte (terre, fetch, MDFC, fonti non-terra)
+│   ├── manaBase.ts        # Fonti per colore e requisiti
+│   ├── manaCost.ts        # Parser dei costi di mana
+│   ├── optimizer.ts       # Distribuzione ottimale delle terre base
+│   ├── probability.ts     # Ipergeometrica e modello di Karsten
+│   ├── simulate.ts        # Simulazione Monte Carlo (+ simulate.worker.ts)
+│   └── warnings.ts        # Regole di warning
 ├── game/
 │   └── london.ts          # Logica mano iniziale e London mulligan
 ├── hooks/
-│   └── useDeckCards.ts    # Dati Scryfall di tutto il mazzo
+│   ├── useDeckCards.ts    # Dati Scryfall di tutto il mazzo
+│   └── useSimulation.ts   # Simulazione nel Web Worker
 ├── services/
 │   ├── deckStorage.ts     # LocalStorage + migrazione formati vecchi
 │   └── scryfall.ts        # API Scryfall con cache IndexedDB

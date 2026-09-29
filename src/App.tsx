@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DeckImport from './components/DeckImport';
 import Hand from './components/Hand';
+import Analysis from './components/Analysis';
 import { saveDeck, getDecks, deleteDeck, createDeck } from './services/deckStorage';
 import { countCards, parseDeckList } from './utils/deckParser';
 import type { Deck } from './types';
@@ -29,7 +30,7 @@ Sideboard
 3 Path to Exile`;
 
 function App() {
-  const [view, setView] = useState<'decks' | 'import' | 'hand'>('decks');
+  const [view, setView] = useState<'decks' | 'import' | 'hand' | 'analysis'>('decks');
   const [decks, setDecks] = useState<Deck[]>([]);
   const [currentDeck, setCurrentDeck] = useState<Deck | null>(null);
 
@@ -65,6 +66,17 @@ function App() {
   const handleStartGame = (deck: Deck) => {
     setCurrentDeck(deck);
     setView('hand');
+  };
+
+  const handleAnalyze = (deck: Deck) => {
+    setCurrentDeck(deck);
+    setView('analysis');
+  };
+
+  const handleDeckUpdated = (deck: Deck) => {
+    saveDeck(deck);
+    setCurrentDeck(deck);
+    loadDecks();
   };
 
   const handleDeleteDeck = (deckId: string) => {
@@ -125,6 +137,12 @@ function App() {
                       >
                         Gioca
                       </button>
+                      <button
+                        onClick={() => handleAnalyze(deck)}
+                        className="btn-secondary"
+                      >
+                        Analizza
+                      </button>
                       <button 
                         onClick={() => handleDeleteDeck(deck.id)}
                         className="btn-danger"
@@ -143,8 +161,16 @@ function App() {
           <DeckImport onDeckImported={handleDeckImported} />
         )}
 
+        {view === 'analysis' && currentDeck && (
+          <Analysis
+            deck={currentDeck}
+            onDeckUpdated={handleDeckUpdated}
+            onPlay={() => setView('hand')}
+          />
+        )}
+
         {view === 'hand' && currentDeck && (
-          <Hand key={currentDeck.id} deck={currentDeck} />
+          <Hand key={currentDeck.id} deck={currentDeck} onAnalyze={() => setView('analysis')} />
         )}
       </main>
 
