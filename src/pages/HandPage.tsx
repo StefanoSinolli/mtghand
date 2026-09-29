@@ -20,7 +20,12 @@ import { rulesFor } from '../formats';
 import CardImage from '../components/cards/CardImage';
 import PlaytestBoard from '../components/playtest/PlaytestBoard';
 import { buildProfiles } from '../analysis/analyze';
+import { collectRequirements } from '../analysis/manaBase';
+import { keyColors, type ManaSymbolColor } from '../analysis/manaCost';
+import { evaluateHand, summarizeHand } from '../analysis/mulliganStats';
+import { bottom, buildLibrary, type SimCard } from '../analysis/simulate';
 import { buildCardInfo, startPlaytest, type PlayCardInfo, type PlaytestState } from '../game/playtest';
+import { getKeepRule, recordDecision } from '../store/mulliganLog';
 import { isPlaceholder, type DisplayCard, type ManaColor } from '../types';
 import { useDeckContext } from './deckContext';
 
@@ -43,19 +48,58 @@ export default function HandPage() {
   const [details, setDetails] = useState<DisplayCard | null>(null);
   const [playtest, setPlaytest] = useState<PlaytestState | null>(null);
 
-  // Informazioni di gioco (terre, costi, mana prodotto) per la prova di gioco
-  const infoOf = useMemo(() => {
+  // Informazioni di gioco (terre, costi, mana prodotto) per la prova di gioco e per giudicare le mani
+  const { infoOf, simOf, deckColors } = useMemo(() => {
     const { profiles, commanderProfiles } = buildProfiles(deck, cards);
     const infos = new Map<string, PlayCardInfo>();
+    const sims = new Map<string, SimCard>();
     for (const p of [...profiles, ...commanderProfiles]) {
       const info = buildCardInfo(p, profiles);
+      const sim = buildLibrary([{ ...p, quantity: 1 }])[0];
       // stessa chiave usata dalle istanze di carta: il nome scritto nella lista
       for (const e of [...deck.main, ...(deck.commanders ?? [])]) {
-        if (getCard(e.name) === p.card) infos.set(e.name, info);
+        if (getCard(e.name) === p.card) {
+          infos.set(e.name, info);
+          sims.set(e.name, sim);
+        }
       }
     }
-    return (name: string) => infos.get(name);
+    const colors = new Set<ManaSymbolColor>(
+      collectRequirements([...profiles, ...commanderProfiles])
+        .filter((r) => !r.alternative && r.key.length === 1)
+        .flatMap((r) => keyColors(r.key)),
+    );
+    return {
+      infoOf: (name: string) => infos.get(name),
+      simOf: (name: string) => sims.get(name),
+      deckColors: [...colors],
+    };
   }, [deck, cards, getCard]);
+
+  /** Salva la decisione nello storico, con il giudizio della regola di keep */
+  const record = useCallback(
+    (state: HandState, action: 'keep' | 'mulligan') => {
+      const hand = state.hand.map((c) => simOf(c.name)).filter((c): c is SimCard => c !== undefined);
+      if (hand.length < state.hand.length) return; // dati delle carte non ancora pronti
+      const toBottom = cardsToBottom(state);
+      const verdict = evaluateHand(
+        summarizeHand(bottom(hand, toBottom)),
+        HAND_SIZE - toBottom,
+        getKeepRule(deck.id),
+        deckColors,
+        state.freeMulligan && state.mulligans === 0,
+      );
+      recordDecision(deck.id, {
+        mulligans: state.mulligans,
+        handSize: HAND_SIZE - toBottom,
+        lands: summarizeHand(hand).lands,
+        action,
+        ruleKeep: verdict.keep,
+        ruleReason: verdict.reason,
+      });
+    },
+    [simOf, deck.id, deckColors],
+  );
 
   const startPlaying = useCallback(() => {
     setPlaytest(
@@ -68,11 +112,16 @@ export default function HandPage() {
 
   const doMulligan = useCallback(() => {
     if (!canMulligan(game)) return;
+    record(game, 'mulligan');
     setGame((g) => mulligan(g));
     setDealKey((k) => k + 1);
-  }, [game]);
+  }, [game, record]);
 
-  const doKeep = useCallback(() => setGame((g) => keep(g)), []);
+  const doKeep = useCallback(() => {
+    if (game.phase !== 'deciding') return;
+    record(game, 'keep');
+    setGame((g) => keep(g));
+  }, [game, record]);
   const doConfirm = useCallback(() => setGame((g) => confirmBottom(g)), []);
   const doNewHand = useCallback(() => {
     setGame(newGame(deck.main, gameOptions));

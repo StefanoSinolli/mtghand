@@ -15,6 +15,7 @@ const deckPages = (editable: boolean): RouteObject[] => [
   { index: true, element: <DeckOverviewPage /> },
   { path: 'hand', ...lazy(() => import('./pages/HandPage')) },
   { path: 'analysis', ...lazy(() => import('./pages/AnalysisPage')) },
+  { path: 'stats', ...lazy(() => import('./pages/StatsPage')) },
   ...(editable ? [{ path: 'edit', ...lazy(() => import('./pages/EditorPage')) }] : []),
 ];
 

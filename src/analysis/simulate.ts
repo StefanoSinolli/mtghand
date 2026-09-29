@@ -57,11 +57,14 @@ interface SimLand {
   isMdfc: boolean;
 }
 
-interface SimCard {
+export interface SimCard {
+  name: string;
   land?: SimLand;
   /** Landcycling: costo e terre che può cercare */
   cycler?: Landcycling;
   manaValue: number;
+  /** Simboli colorati della faccia principale (ognuno con i colori che lo pagano) */
+  pips: ManaSymbolColor[][];
 }
 
 interface BattlefieldLand {
@@ -90,7 +93,7 @@ const canPay = (pips: ManaSymbolColor[][], lands: BattlefieldLand[]) =>
     lands.map((l, i) => ({ id: String(i), colors: l.colors, amount: 1 })),
   );
 
-const buildLibrary = (profiles: CardProfile[]): SimCard[] => {
+export const buildLibrary = (profiles: CardProfile[]): SimCard[] => {
   const cards: SimCard[] = [];
   for (const p of profiles) {
     const land: SimLand | undefined = p.land
@@ -103,8 +106,10 @@ const buildLibrary = (profiles: CardProfile[]): SimCard[] => {
           isMdfc: p.land.isMdfc,
         }
       : undefined;
-    const manaValue = p.spells[0]?.manaValue ?? 0;
-    for (let i = 0; i < p.quantity; i++) cards.push({ land, cycler: p.landcycling, manaValue });
+    const face = p.spells[0];
+    const manaValue = face?.manaValue ?? 0;
+    const pips = face ? [...face.pips].flatMap(([key, n]) => Array.from({ length: n }, () => keyColors(key))) : [];
+    for (let i = 0; i < p.quantity; i++) cards.push({ name: p.name, land, cycler: p.landcycling, manaValue, pips });
   }
   return cards;
 };
@@ -123,7 +128,7 @@ const faceChecks = (profiles: CardProfile[], maxTurn: number): FaceCheck[] =>
   );
 
 /** Le carte con landcycling contano come terre nel decidere mulligan e fondo */
-const isLandish = (c: SimCard) => c.land !== undefined || c.cycler !== undefined;
+export const isLandish = (c: SimCard) => c.land !== undefined || c.cycler !== undefined;
 
 /** Indice nel mazzo della prima terra che il landcycling può trovare */
 const findCycleTarget = (deck: SimCard[], from: number, cycler: Landcycling) =>
@@ -140,7 +145,7 @@ const findCycleTarget = (deck: SimCard[], from: number, cycler: Landcycling) =>
  * Mette in fondo `count` carte secondo la strategia di Karsten: prima le magie più costose
  * (quante ne dice spellsToBottom), poi le terre che producono meno colori
  */
-const bottom = (hand: SimCard[], count: number) => {
+export const bottom = <T extends SimCard>(hand: T[], count: number): T[] => {
   const spells = hand.filter((c) => !isLandish(c)).sort((a, b) => b.manaValue - a.manaValue);
   const lands = hand.filter(isLandish).sort((a, b) => (a.land?.colors.length ?? 0) - (b.land?.colors.length ?? 0));
   const spellCount = spellsToBottom(spells.length, count);
@@ -168,7 +173,7 @@ export const resolveMulligan = <T extends SimCard>(
   for (let i = 0; ; i++) {
     const shuffled = shuffle(cards, random);
     const step = steps[i];
-    const hand = bottom(shuffled.slice(0, 7), 7 - step.handSize) as T[];
+    const hand = bottom(shuffled.slice(0, 7), 7 - step.handSize);
     const lands = hand.filter(isLandish).length;
     if (i === steps.length - 1 || (lands >= step.minLands && lands <= step.maxLands)) {
       return { hand, library: shuffled.slice(7), mulligans: i };

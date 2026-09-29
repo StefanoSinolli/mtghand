@@ -13,6 +13,7 @@ const TABS = [
   { to: '', label: 'Panoramica', end: true },
   { to: 'hand', label: 'Mano' },
   { to: 'analysis', label: 'Analisi' },
+  { to: 'stats', label: 'Statistiche' },
   { to: 'edit', label: 'Modifica', editable: true },
 ];
 

@@ -25,6 +25,9 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
   inclusa): riproduce le sue tabelle 2022 per 40, 60 e 99 carte
 - ✅ Condivisione via link: il mazzo è compresso nell'URL (nessun server); chi lo apre può provarlo,
   analizzarlo e salvarlo tra i suoi mazzi
+- ✅ Statistiche sui mulligan: regola di keep modificabile (terre per 7/6/5 carte, colori, magie
+  economiche), simulazione di 10.000 mani con i motivi dei mulligan e storico delle tue decisioni
+  confrontate con la regola
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
 
