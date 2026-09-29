@@ -79,8 +79,17 @@ export interface SpellFace {
   turn: number;
   /** Simboli obbligatori per gruppo di colori, es. { U: 2 } */
   pips: Map<string, number>;
-  /** Faccia alternativa (seconda metà di split, avventura, retro MDFC) */
+  /** Faccia alternativa (seconda metà di split, avventura, retro MDFC, landcycler) */
   alternative: boolean;
+  /** Valore di mana stampato; manaValue è quello effettivo stimato se il costo si riduce */
+  printedManaValue: number;
+  /** Delve, Affinity, Convoke, Improvise o "costa {1} in meno per ogni…" */
+  costReduced: boolean;
+}
+
+/** Landcycling: paghi il costo, scarti la carta e cerchi una terra (es. Islandcycling {1}) */
+export interface Landcycling extends FetchAbility {
+  cost: number;
 }
 
 export interface CardProfile {
@@ -88,6 +97,8 @@ export interface CardProfile {
   quantity: number;
   card: ScryfallCard;
   land?: LandProfile;
+  /** Magia con landcycling: conta come mezza terra */
+  landcycling?: Landcycling;
   spells: SpellFace[];
   /** Valore di mana usato per il costo medio del mazzo (null = escluso) */
   manaValue: number | null;
@@ -147,15 +158,40 @@ const parseTapped = (oracle = ''): TappedRule => {
 const producedColors = (card: ScryfallCard): ManaSymbolColor[] =>
   (card.produced_mana ?? []).filter((c): c is ManaSymbolColor => c === 'C' || (COLORS as string[]).includes(c));
 
-const buildSpellFace = (name: string, manaCost: string, alternative: boolean): SpellFace => {
+const COST_REDUCTION = /\bcosts? \{\d+\} less to cast for each\b|\bDelve\b|\bAffinity for\b|\bConvoke\b|\bImprovise\b/i;
+
+const buildSpellFace = (name: string, manaCost: string, alternative: boolean, oracle = ''): SpellFace => {
   const cost = parseManaCost(manaCost);
+  const costReduced = COST_REDUCTION.test(oracle) && cost.generic > 1;
+  // Costo effettivo stimato: i simboli colorati si pagano sempre, il generico si riduce quasi del tutto
+  // (Tolarian Terror {6}{U} → 2, Murktide Regent {5}{U}{U} → 3, Frogmite {4} → 1)
+  const manaValue = costReduced
+    ? cost.pips.length + cost.optionalPips.length + Math.min(cost.generic, 1)
+    : cost.manaValue;
   return {
     name,
     manaCost,
-    manaValue: cost.manaValue,
-    turn: Math.max(1, cost.manaValue + cost.x),
+    manaValue,
+    turn: Math.max(1, manaValue + cost.x),
     pips: groupPips(cost.pips),
     alternative,
+    printedManaValue: cost.manaValue,
+    costReduced,
+  };
+};
+
+const LANDCYCLING = /\b(Plains|Island|Swamp|Mountain|Forest|Basic land|Land)cycling ((?:\{[^}]+\})+)/i;
+
+const parseLandcycling = (oracle: string): Landcycling | undefined => {
+  const match = oracle.match(LANDCYCLING);
+  if (!match) return undefined;
+  const word = match[1].toLowerCase();
+  const type = BASIC_TYPES.find((t) => t.toLowerCase() === word);
+  return {
+    types: type ? [type] : [],
+    basicOnly: word === 'basic land',
+    entersTapped: false,
+    cost: parseManaCost(match[2]).manaValue,
   };
 };
 
@@ -198,11 +234,20 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
         ? faces.filter((f) => f.mana_cost !== undefined && !isLandType(f.type_line))
         : [front];
 
+    const oracle = faces.map((f) => f.oracle_text ?? '').join('\n') || (card.oracle_text ?? '');
+    profile.landcycling = profile.land ? undefined : parseLandcycling(oracle);
+
+    // Un landcycler si usa soprattutto come terra: la magia resta, ma come faccia alternativa
     profile.spells = castable.map((f, i) =>
-      buildSpellFace(f.name, f.mana_cost ?? card.mana_cost ?? '', i > 0),
+      buildSpellFace(
+        f.name,
+        f.mana_cost ?? card.mana_cost ?? '',
+        i > 0 || profile.landcycling !== undefined,
+        f.oracle_text ?? card.oracle_text,
+      ),
     );
 
-    if (!profile.land) {
+    if (!profile.land && !profile.landcycling) {
       const values = profile.spells.map((s) => s.manaValue);
       profile.manaValue = card.layout === 'split' ? Math.min(...values) : (values[0] ?? card.cmc);
     }
@@ -223,9 +268,9 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
       };
     }
 
-    const oracle = faces.map((f) => f.oracle_text ?? '').join('\n') || (card.oracle_text ?? '');
     profile.cheapDrawOrRamp =
       !profile.land &&
+      !profile.landcycling &&
       mv <= 2 &&
       (profile.nonLandSource !== undefined ||
         (!/\bCreature\b/.test(typeLine) && (CHEAP_DRAW.test(oracle) || CHEAP_RAMP.test(oracle))));
@@ -234,5 +279,8 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
   return profile;
 };
 
-/** Peso della carta come terra: 1, oppure 0.5 per le MDFC spell // terra */
-export const landWeight = (profile: CardProfile) => (profile.land ? (profile.land.isMdfc ? 0.5 : 1) : 0);
+/** Peso della carta come terra: 1, oppure 0.5 per le MDFC spell // terra e le carte con landcycling */
+export const landWeight = (profile: CardProfile) => {
+  if (profile.land) return profile.land.isMdfc ? 0.5 : 1;
+  return profile.landcycling ? 0.5 : 0;
+};

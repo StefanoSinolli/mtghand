@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { profileCard } from './cardProfile';
+import { landWeight, profileCard } from './cardProfile';
 import { fixtureCard } from './__fixtures__/load';
 
 const profile = (name: string, quantity = 1, side = false) => profileCard(fixtureCard(name), quantity, side);
@@ -82,5 +82,38 @@ describe('fonti non-terra e formula delle terre', () => {
   it('riconosce il companion solo in sideboard', () => {
     expect(profile('Lurrus of the Dream-Den', 1, true).isCompanion).toBe(true);
     expect(profile('Lurrus of the Dream-Den', 1, false).isCompanion).toBe(false);
+  });
+});
+
+describe('landcycling e costi ridotti', () => {
+  it('tratta le carte con landcycling come mezza terra', () => {
+    const lorien = profile('Lorien Revealed', 4);
+    expect(lorien.landcycling).toEqual({ types: ['Island'], basicOnly: false, entersTapped: false, cost: 1 });
+    expect(lorien.manaValue).toBeNull(); // escluso dal costo medio
+    expect(lorien.spells[0].alternative).toBe(true);
+    expect(lorien.cheapDrawOrRamp).toBe(false);
+    expect(landWeight(lorien)).toBe(0.5);
+
+    expect(profile('Troll of Khazad-dûm').landcycling).toMatchObject({ types: ['Swamp'], cost: 1 });
+    // Ash Barrens è già una terra: il landcycling non conta due volte
+    expect(profile('Ash Barrens').landcycling).toBeUndefined();
+  });
+
+  it('stima il costo effettivo delle carte con riduzione di costo', () => {
+    const expectations: Array<[string, number, number]> = [
+      ['Tolarian Terror', 7, 2],
+      ['Cryptic Serpent', 7, 3],
+      ['Murktide Regent', 7, 3],
+      ['Gurmag Angler', 7, 2],
+      ['Deem Inferior', 4, 2],
+      ['Frogmite', 4, 1],
+      ['Thoughtcast', 5, 2],
+    ];
+    for (const [name, printed, effective] of expectations) {
+      const face = profile(name).spells[0];
+      expect([name, face.printedManaValue, face.manaValue, face.costReduced]).toEqual([name, printed, effective, true]);
+      expect(face.turn).toBe(effective);
+    }
+    expect(profile('Counterspell').spells[0].costReduced).toBe(false);
   });
 });

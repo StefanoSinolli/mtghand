@@ -56,7 +56,9 @@ export default function AnalysisPage() {
       <p className="text-xs leading-relaxed text-stone-500">
         Soglie calcolate con il modello di Frank Karsten: una carta è consistente se, avendo abbastanza terre, la
         probabilità di avere le fonti colorate entro il suo turno è almeno (89 + costo)%. Numero di terre: regressione di
-        Karsten 19.59 + 1.90 × costo medio − 0.28 × pescate/ramp economici + 0.27 × companion.
+        Karsten 19.59 + 1.90 × costo medio − 0.28 × pescate/ramp economici + 0.27 × companion. MDFC e carte con
+        landcycling contano come mezza terra; le carte con riduzione di costo (Delve, Affinity, "costa {'{1}'} in meno
+        per ogni…") usano un costo effettivo stimato: simboli colorati più al massimo 1 generico.
       </p>
     </div>
   );
@@ -168,13 +170,18 @@ function Proposals({ analysis }: { analysis: DeckAnalysis }) {
 function LandCount({ analysis }: { analysis: DeckAnalysis }) {
   const { landCount, lands, tapped } = analysis;
   const cheap = landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0);
+  const halfLands = lands.mdfc + lands.landcyclers;
 
   return (
     <Panel title="Numero di terre">
       <div className="flex items-end gap-6">
         <div>
           <p className="text-4xl font-bold text-stone-50 tabular-nums">{num(lands.weighted)}</p>
-          <p className="text-xs text-stone-400">nel mazzo</p>
+          <p className="text-xs text-stone-400">
+            {halfLands > 0
+              ? `effettive (${lands.playable - halfLands} terre + ${halfLands} × ½)`
+              : 'nel mazzo'}
+          </p>
         </div>
         <div>
           <p className="text-4xl font-bold text-gold-300 tabular-nums">{landCount.recommended.toFixed(1)}</p>
@@ -183,6 +190,22 @@ function LandCount({ analysis }: { analysis: DeckAnalysis }) {
       </div>
       <ul className="mt-4 space-y-1.5 text-sm text-stone-400">
         {lands.mdfc > 0 && <li>{lands.mdfc} MDFC contate come mezza terra</li>}
+        {landCount.landcyclers.length > 0 && (
+          <li>
+            Contate come mezza terra (landcycling):{' '}
+            <span className="text-stone-300">
+              {landCount.landcyclers.map((c) => `${c.quantity} ${c.name}`).join(', ')}
+            </span>
+          </li>
+        )}
+        {landCount.costReduced.length > 0 && (
+          <li>
+            Costo effettivo stimato:{' '}
+            <span className="text-stone-300">
+              {landCount.costReduced.map((c) => `${c.name} ${c.printed}→${c.effective}`).join(', ')}
+            </span>
+          </li>
+        )}
         <li>
           Pescate/ramp economici ({cheap}):{' '}
           <span className="text-stone-300">

@@ -137,23 +137,34 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
       id: 'land-count',
       severity: Math.abs(delta) >= 2 ? 'warning' : 'info',
       title: `${delta < 0 ? 'Poche' : 'Troppe'} terre: ne hai ${formatSources(current)}, ne servono circa ${recommended.toFixed(1)}`,
-      detail: `Formula di Karsten con costo medio ${averageManaValue.toFixed(2)} e ${a.landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0)} pescate/ramp economici.`,
+      detail: [
+        `Formula di Karsten con costo medio ${averageManaValue.toFixed(2)} e ${a.landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0)} pescate/ramp economici.`,
+        a.lands.landcyclers > 0 && `Le ${a.lands.landcyclers} carte con landcycling contano come mezza terra.`,
+        a.landCount.costReduced.length > 0 &&
+          `Costo effettivo stimato per ${a.landCount.costReduced.map((c) => `${c.name} (${c.printed}→${c.effective})`).join(', ')}.`,
+      ]
+        .filter(Boolean)
+        .join(' '),
     });
   }
 
+  // Mani da 0–1 o 6–7 terre: sono un problema solo se il numero di terre non è quello giusto;
+  // altrimenti è la normale varianza del mazzo (es. aggro con 17 terre), gestita dal mulligan
   const { screw, flood } = a.openingHand;
   if (screw > 0.2) {
     warnings.push({
       id: 'screw',
-      severity: 'warning',
+      severity: delta <= -1 ? 'warning' : 'info',
       title: `${pct(screw)} di probabilità di aprire con 0–1 terre`,
+      detail: delta <= -1 ? undefined : 'In linea con il numero di terre consigliato: il mulligan compensa queste mani.',
     });
   }
   if (flood > 0.1) {
     warnings.push({
       id: 'flood',
-      severity: 'warning',
+      severity: delta >= 1 ? 'warning' : 'info',
       title: `${pct(flood)} di probabilità di aprire con 6–7 terre`,
+      detail: delta >= 1 ? undefined : 'In linea con il numero di terre consigliato: il mulligan compensa queste mani.',
     });
   }
 

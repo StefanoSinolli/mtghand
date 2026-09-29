@@ -5,7 +5,7 @@
 import type { Deck, ScryfallCard } from '../types';
 import { normalizeName } from '../services/scryfall';
 import { profileCard, type CardProfile } from './cardProfile';
-import { checkRequirements, countLands, landColors, type LandTotals, type RequirementCheck } from './manaBase';
+import { checkRequirements, countLands, landLikeSource, type LandTotals, type RequirementCheck } from './manaBase';
 import { keyColors } from './manaCost';
 import { landDropProbability, openingHandLandDistribution } from './probability';
 import { optimizeBasics, type OptimizerProposal } from './optimizer';
@@ -18,6 +18,10 @@ export interface LandCountAdvice {
   averageManaValue: number;
   cheapDrawOrRamp: Array<{ name: string; quantity: number }>;
   hasCompanion: boolean;
+  /** Carte con costo ridotto contate al costo effettivo stimato */
+  costReduced: Array<{ name: string; quantity: number; printed: number; effective: number }>;
+  /** Carte con landcycling contate come mezza terra */
+  landcyclers: Array<{ name: string; quantity: number }>;
 }
 
 export interface ColorSummary {
@@ -111,6 +115,15 @@ const landCountAdvice = (profiles: CardProfile[], lands: LandTotals, companion: 
     averageManaValue,
     cheapDrawOrRamp: cheap,
     hasCompanion: companion,
+    costReduced: profiles
+      .filter((p) => p.spells[0]?.costReduced && !p.spells[0].alternative)
+      .map((p) => ({
+        name: p.name,
+        quantity: p.quantity,
+        printed: p.spells[0].printedManaValue,
+        effective: p.spells[0].manaValue,
+      })),
+    landcyclers: profiles.filter((p) => p.landcycling).map((p) => ({ name: p.name, quantity: p.quantity })),
   };
 };
 
@@ -121,9 +134,11 @@ const summarizeColors = (checks: RequirementCheck[], profiles: CardProfile[]): C
   return [...byKey].map(([key, list]) => {
     const sorted = [...list].sort((a, b) => (b.required ?? 99) - (a.required ?? 99) || a.turn - b.turn);
     const worst = [...list].sort((a, b) => a.ratio - b.ratio)[0];
-    const landSources = profiles
-      .filter((p) => p.land && keyColors(key).some((c) => landColors(p.land!, profiles).has(c)))
-      .reduce((s, p) => s + (p.land!.isMdfc ? 0.5 : 1) * p.quantity, 0);
+    let landSources = 0;
+    for (const p of profiles) {
+      const source = landLikeSource(p, profiles);
+      if (source && keyColors(key).some((c) => source.colors.has(c))) landSources += source.weight * p.quantity;
+    }
     return { key, landSources, worst, checks: sorted, ok: list.every((c) => c.ok) };
   });
 };

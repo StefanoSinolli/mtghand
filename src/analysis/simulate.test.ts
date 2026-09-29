@@ -46,6 +46,13 @@ describe('simulazione', () => {
     expect(fast.untappedLandDrops[1]).toBeCloseTo(fast.landDrops[1], 5);
   });
 
+  it('cicla i landcycler quando mancano le terre', () => {
+    const withCyclers = run('4 Counterspell\n36 Opt\n4 Lorien Revealed\n16 Island');
+    const withoutCyclers = run('4 Counterspell\n40 Opt\n16 Island');
+    expect(withCyclers.landDrops[2]).toBeGreaterThan(withoutCyclers.landDrops[2] + 0.05);
+    expect(withCyclers.mulligans[0]).toBeGreaterThan(withoutCyclers.mulligans[0]);
+  });
+
   it('i colori mancanti abbassano la probabilità di lancio', () => {
     const r = run('4 Counterspell\n32 Lightning Bolt\n2 Island\n22 Mountain');
     const cs = r.casts.find((c) => c.card === 'Counterspell')!;

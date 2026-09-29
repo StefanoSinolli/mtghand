@@ -2,51 +2,70 @@
  * Fonti di mana e requisiti di colore di un mazzo
  */
 
-import { landWeight, type CardProfile, type LandProfile } from './cardProfile';
+import { landWeight, type CardProfile, type FetchAbility, type LandProfile } from './cardProfile';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 import { requiredSources } from './probability';
 
-/** Colori che una terra può fornire, risolvendo le fetch sulle terre presenti nel mazzo */
-export const landColors = (land: LandProfile, deck: CardProfile[]): Set<ManaSymbolColor> => {
-  const colors = new Set(land.produces);
-  const fetch = land.fetch;
-  if (!fetch) return colors;
-
+/** Colori delle terre del mazzo che un effetto di ricerca (fetch, landcycling) può trovare */
+export const fetchableColors = (fetch: FetchAbility, deck: CardProfile[], into = new Set<ManaSymbolColor>()) => {
   for (const target of deck) {
     const t = target.land;
     if (!t || t.isMdfc || t.fetch || target.quantity <= 0) continue;
     if (fetch.basicOnly && !t.isBasic) continue;
     if (fetch.types.length > 0 && !t.basicTypes.some((type) => fetch.types.includes(type))) continue;
-    for (const c of t.produces) colors.add(c);
+    for (const c of t.produces) into.add(c);
   }
-  return colors;
+  return into;
+};
+
+/** Colori che una terra può fornire, risolvendo le fetch sulle terre presenti nel mazzo */
+export const landColors = (land: LandProfile, deck: CardProfile[]): Set<ManaSymbolColor> => {
+  const colors = new Set(land.produces);
+  return land.fetch ? fetchableColors(land.fetch, deck, colors) : colors;
+};
+
+export interface LandLikeSource {
+  colors: Set<ManaSymbolColor>;
+  /** Peso come terra: 1, 0.5 per MDFC e landcycler */
+  weight: number;
+  /** Primo turno in cui fornisce mana (un landcycler da {1} serve dal turno 2) */
+  fromTurn: number;
+}
+
+/** Terre, MDFC e carte con landcycling come fonti di mana */
+export const landLikeSource = (p: CardProfile, deck: CardProfile[]): LandLikeSource | null => {
+  if (p.land) return { colors: landColors(p.land, deck), weight: landWeight(p), fromTurn: 1 };
+  if (p.landcycling) {
+    return { colors: fetchableColors(p.landcycling, deck), weight: landWeight(p), fromTurn: p.landcycling.cost + 1 };
+  }
+  return null;
 };
 
 const matchesKey = (colors: Set<ManaSymbolColor>, key: string) => keyColors(key).some((c) => colors.has(c));
 
 export interface LandTotals {
-  /** Terre con le MDFC contate a metà (usato nei modelli) */
+  /** Terre con MDFC e landcycler contati a metà (usato nei modelli) */
   weighted: number;
-  /** Carte giocabili come terra, MDFC incluse */
+  /** Carte che possono fare da terra, MDFC e landcycler inclusi */
   playable: number;
   mdfc: number;
+  landcyclers: number;
 }
 
 export const countLands = (deck: CardProfile[]): LandTotals => {
-  let weighted = 0;
-  let playable = 0;
-  let mdfc = 0;
+  const totals: LandTotals = { weighted: 0, playable: 0, mdfc: 0, landcyclers: 0 };
   for (const p of deck) {
-    if (!p.land) continue;
-    weighted += landWeight(p) * p.quantity;
-    playable += p.quantity;
-    if (p.land.isMdfc) mdfc += p.quantity;
+    if (!p.land && !p.landcycling) continue;
+    totals.weighted += landWeight(p) * p.quantity;
+    totals.playable += p.quantity;
+    if (p.land?.isMdfc) totals.mdfc += p.quantity;
+    if (p.landcycling) totals.landcyclers += p.quantity;
   }
-  return { weighted, playable, mdfc };
+  return totals;
 };
 
 export interface SourceCount {
-  /** Terre (MDFC a metà) che producono o possono cercare il colore */
+  /** Terre (MDFC e landcycler a metà) che producono o possono cercare il colore */
   lands: number;
   /** Fonti non-terra disponibili entro il turno richiesto, già pesate */
   support: number;
@@ -61,9 +80,12 @@ export const countSources = (deck: CardProfile[], key: string, turn: number): So
   for (const p of deck) {
     if (p.quantity <= 0) continue;
 
-    if (p.land && matchesKey(landColors(p.land, deck), key)) {
-      result.lands += landWeight(p) * p.quantity;
-      result.landNames.push(p.name);
+    const landLike = landLikeSource(p, deck);
+    if (landLike) {
+      if (landLike.fromTurn <= turn && matchesKey(landLike.colors, key)) {
+        result.lands += landLike.weight * p.quantity;
+        result.landNames.push(p.name);
+      }
     } else if (p.nonLandSource && p.nonLandSource.manaValue < turn) {
       const produces = new Set(p.nonLandSource.produces);
       if (matchesKey(produces, key)) {

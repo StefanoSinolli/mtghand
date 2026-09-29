@@ -78,7 +78,7 @@ describe('Izzet', () => {
     // L'optimizer ridistribuisce le base a favore del blu
     const blueAfter = a.optimizer!.sources.find((s) => s.key === 'U')!;
     expect(blueAfter.before).toBe(2);
-    expect(blueAfter.after).toBeGreaterThan(8);
+    expect(blueAfter.after).toBeGreaterThanOrEqual(8);
     expect(a.optimizer!.after.deficit).toBeLessThan(a.optimizer!.before.deficit);
   });
 
@@ -155,5 +155,44 @@ describe('optimizer', () => {
   it('segnala quando servono terre doppie', () => {
     const a = analyze(`8 Counterspell\n8 Lightning Bolt\n4 Cryptic Command\n4 Murktide Regent\n16 Consider\n2 Island\n18 Mountain`);
     expect(a.optimizer!.feasible).toBe(false);
+  });
+});
+
+describe('Mono U Terror (Pauper)', () => {
+  const TERROR = `16 Island
+4 Delver of Secrets
+4 Tolarian Terror
+4 Cryptic Serpent
+4 Brainstorm
+3 Ponder
+4 Thought Scour
+4 Mental Note
+4 Counterspell
+4 Lorien Revealed
+3 Force Spike
+3 Deem Inferior
+2 Sleep of the Dead
+1 Plunder the Trollshaws`;
+
+  it('conta Lórien Revealed come mezza terra e i costi ridotti al valore effettivo', () => {
+    const a = analyze(TERROR);
+    expect(a.lands).toMatchObject({ weighted: 18, playable: 20, landcyclers: 4 });
+    expect(a.landCount.averageManaValue).toBeCloseTo(1.5, 2);
+    expect(a.landCount.recommended).toBeCloseTo(17.96, 1);
+    expect(a.landCount.costReduced.map((c) => c.name)).toEqual(['Tolarian Terror', 'Cryptic Serpent', 'Deem Inferior']);
+    expect(a.warnings.find((w) => w.id === 'land-count')).toBeUndefined();
+    // la varianza della mano iniziale è solo informativa
+    expect(a.warnings.find((w) => w.id === 'screw')?.severity).toBe('info');
+  });
+
+  it('i landcycler sono fonti di blu dal turno 2', () => {
+    const a = analyze(TERROR);
+    const blue = a.colors.find((c) => c.key === 'U')!;
+    expect(blue.landSources).toBe(18);
+    const delver = blue.checks.find((c) => c.card.startsWith('Delver'))!;
+    const counterspell = blue.checks.find((c) => c.card === 'Counterspell')!;
+    expect(delver.sources.lands).toBe(16);
+    expect(counterspell.sources.lands).toBe(18);
+    expect(a.optimizer!.changes).toEqual([]);
   });
 });

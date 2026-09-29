@@ -1092,5 +1092,360 @@
     "colors": []
    }
   ]
+ },
+ {
+  "id": "6904ea20-e504-47da-95a0-08739fdde260",
+  "name": "Delver of Secrets // Insectile Aberration",
+  "layout": "transform",
+  "cmc": 1.0,
+  "type_line": "Creature — Human Wizard // Creature — Human Insect",
+  "color_identity": [
+   "U"
+  ],
+  "card_faces": [
+   {
+    "name": "Delver of Secrets",
+    "mana_cost": "{U}",
+    "type_line": "Creature — Human Wizard",
+    "oracle_text": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform this creature.",
+    "colors": [
+     "U"
+    ]
+   },
+   {
+    "name": "Insectile Aberration",
+    "mana_cost": "",
+    "type_line": "Creature — Human Insect",
+    "oracle_text": "Flying",
+    "colors": [
+     "U"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "2569d4f3-55ed-4f99-9592-34c7df0aab72",
+  "name": "Tolarian Terror",
+  "layout": "normal",
+  "mana_cost": "{6}{U}",
+  "cmc": 7.0,
+  "type_line": "Creature — Serpent",
+  "oracle_text": "This spell costs {1} less to cast for each instant and sorcery card in your graveyard.\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "7f1af32a-dba2-4c2f-b0ee-9c83849fda53",
+  "name": "Cryptic Serpent",
+  "layout": "normal",
+  "mana_cost": "{5}{U}{U}",
+  "cmc": 7.0,
+  "type_line": "Creature — Serpent",
+  "oracle_text": "This spell costs {1} less to cast for each instant and sorcery card in your graveyard.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "ec7d6864-7b6b-4f74-8474-9b9ec96b1d33",
+  "name": "Brainstorm",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "dc69f960-68ba-4315-8146-6a7a82047503",
+  "name": "Ponder",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Look at the top three cards of your library, then put them back in any order. You may shuffle.\nDraw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "1f343724-6ecd-494f-8bfc-93676af4e173",
+  "name": "Mental Note",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Mill two cards.\nDraw a card.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "209204c7-aae5-4768-91b8-89c8c4d4a97f",
+  "name": "Lórien Revealed",
+  "layout": "normal",
+  "mana_cost": "{3}{U}{U}",
+  "cmc": 5.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Draw three cards.\nIslandcycling {1} ({1}, Discard this card: Search your library for an Island card, reveal it, put it into your hand, then shuffle.)",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "97a6c6c9-dd26-4ce7-850f-0b3fc49245bd",
+  "name": "Force Spike",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Counter target spell unless its controller pays {1}.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "cc0835c7-58ca-4f16-984a-c590ce6a229a",
+  "name": "Deem Inferior",
+  "layout": "normal",
+  "mana_cost": "{3}{U}",
+  "cmc": 4.0,
+  "type_line": "Sorcery",
+  "oracle_text": "This spell costs {1} less to cast for each card you've drawn this turn.\nThe owner of target nonland permanent puts it into their library second from the top or on the bottom.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "4007572b-a6c8-4a56-b1a7-ff099189c9c0",
+  "name": "Sleep of the Dead",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Tap target creature. It doesn't untap during its controller's next untap step.\nEscape—{2}{U}, Exile three other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "afb73190-b9bd-4744-a011-a37cd9c0148d",
+  "name": "Plunder the Trollshaws",
+  "layout": "normal",
+  "mana_cost": "{1}{U}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Draw a card. If this spell was cast from a graveyard, draw two cards instead.\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "4c9c9b16-5567-4473-95e6-622292f77336",
+  "name": "Hydroblast",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Choose one —\n• Counter target spell if it's red.\n• Destroy target permanent if it's red.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "2f51f88f-f662-4572-a371-9a77718ed079",
+  "name": "Blue Elemental Blast",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Choose one —\n• Counter target red spell.\n• Destroy target red permanent.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "4feeebea-aa55-4599-ab5a-4e41a54d0dfd",
+  "name": "Annul",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Counter target artifact or enchantment spell.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "c227437d-1fc7-4a00-ace5-80795adc51d3",
+  "name": "Steel Sabotage",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Choose one —\n• Counter target artifact spell.\n• Return target artifact to its owner's hand.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "e7ed250e-12d0-4ebc-9410-5711e71c6d1f",
+  "name": "Envelop",
+  "layout": "normal",
+  "mana_cost": "{U}",
+  "cmc": 1.0,
+  "type_line": "Instant",
+  "oracle_text": "Counter target sorcery spell.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "5d09cc57-2275-4b6b-aaf6-a6d781cd9365",
+  "name": "Street Wraith",
+  "layout": "normal",
+  "mana_cost": "{3}{B}{B}",
+  "cmc": 5.0,
+  "type_line": "Creature — Wraith",
+  "oracle_text": "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)\nCycling—Pay 2 life. (Pay 2 life, Discard this card: Draw a card.)",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "5edb0c1d-be6a-42b1-829c-ffbea3647ad8",
+  "name": "Troll of Khazad-dûm",
+  "layout": "normal",
+  "mana_cost": "{5}{B}",
+  "cmc": 6.0,
+  "type_line": "Creature — Troll",
+  "oracle_text": "This creature can't be blocked except by three or more creatures.\nSwampcycling {1} ({1}, Discard this card: Search your library for a Swamp card, reveal it, put it into your hand, then shuffle.)",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "e8510205-4baa-4f1c-bf64-5d931e2ddf48",
+  "name": "Ash Barrens",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}: Add {C}.\nBasic landcycling {1} ({1}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ]
+ },
+ {
+  "id": "cedd44eb-f381-46e1-bcb0-88416b4ce33d",
+  "name": "Gurmag Angler",
+  "layout": "normal",
+  "mana_cost": "{6}{B}",
+  "cmc": 7.0,
+  "type_line": "Creature — Zombie Fish",
+  "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "b2991802-e313-40de-b167-0ede5efff101",
+  "name": "Frogmite",
+  "layout": "normal",
+  "mana_cost": "{4}",
+  "cmc": 4.0,
+  "type_line": "Artifact Creature — Frog",
+  "oracle_text": "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)",
+  "colors": [],
+  "color_identity": []
+ },
+ {
+  "id": "466a0be8-31b9-4ea0-9a96-b09a76f4ec69",
+  "name": "Thoughtcast",
+  "layout": "normal",
+  "mana_cost": "{4}{U}",
+  "cmc": 5.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)\nDraw two cards.",
+  "colors": [
+   "U"
+  ],
+  "color_identity": [
+   "U"
+  ]
+ },
+ {
+  "id": "40e21394-146e-4648-b81e-63659c0c4764",
+  "name": "Qasali Slingers",
+  "layout": "normal",
+  "mana_cost": "{4}{G}",
+  "cmc": 5.0,
+  "type_line": "Creature — Cat Warrior",
+  "oracle_text": "Reach\nWhenever this creature or another Cat you control enters, you may destroy target artifact or enchantment.",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ]
  }
 ]

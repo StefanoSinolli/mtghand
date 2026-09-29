@@ -5,9 +5,9 @@
  */
 
 import type { ScryfallCard } from '../types';
-import { BASIC_TYPE_COLOR, COLOR_BASIC_NAME, landWeight, type BasicType, type CardProfile } from './cardProfile';
+import { BASIC_TYPE_COLOR, COLOR_BASIC_NAME, type BasicType, type CardProfile } from './cardProfile';
 import { keyColors, type ManaSymbolColor } from './manaCost';
-import { collectRequirements, countLands, landColors, type Requirement } from './manaBase';
+import { collectRequirements, countLands, landLikeSource, type Requirement } from './manaBase';
 import { requiredSources } from './probability';
 
 export interface ManaBaseScore {
@@ -109,8 +109,16 @@ const buildEvaluator = (
     support.set(k, total);
   }
 
-  // Colori delle terre fisse in base a quali base sono presenti (le fetch dipendono da questo)
-  const fixedLands = fixed.filter((p) => p.land && p.quantity > 0);
+  // Fonti fisse (terre non-base, MDFC, landcycler) per chiave e turno, in base a quali base sono
+  // presenti: fetch e landcycling trovano solo le terre che ci sono nel mazzo
+  const DISPLAY_TURN = 99;
+  const slots = [
+    ...new Set([...requirements.map((r) => `${r.key}:${r.turn}`), ...keys.map((k) => `${k}:${DISPLAY_TURN}`)]),
+  ].map((slot) => {
+    const [key, turn] = slot.split(':');
+    return { slot, colors: keyColors(key), turn: Number(turn) };
+  });
+  const fixedLandLike = fixed.filter((p) => (p.land || p.landcycling) && p.quantity > 0);
   const fixedCache = new Map<number, Map<string, number>>();
   const fixedSources = (counts: number[]) => {
     const mask = counts.reduce((m, c, i) => (c > 0 ? m | (1 << i) : m), 0);
@@ -118,11 +126,13 @@ const buildEvaluator = (
     if (!cached) {
       const present = basicProfiles.map((b, i) => ({ ...b, quantity: counts[i] }));
       const all = [...fixed, ...present];
-      cached = new Map(keys.map((k) => [k, 0]));
-      for (const p of fixedLands) {
-        const lc = landColors(p.land!, all);
-        for (const k of keys) {
-          if (keyColors(k).some((c) => lc.has(c))) cached.set(k, cached.get(k)! + landWeight(p) * p.quantity);
+      cached = new Map(slots.map((s) => [s.slot, 0]));
+      for (const p of fixedLandLike) {
+        const source = landLikeSource(p, all)!;
+        for (const s of slots) {
+          if (source.fromTurn <= s.turn && s.colors.some((c) => source.colors.has(c))) {
+            cached.set(s.slot, cached.get(s.slot)! + source.weight * p.quantity);
+          }
         }
       }
       fixedCache.set(mask, cached);
@@ -130,29 +140,26 @@ const buildEvaluator = (
     return cached;
   };
 
-  const sourcesFor = (counts: number[]) => {
-    const base = fixedSources(counts);
-    const result = new Map<string, number>();
-    for (const k of keys) {
-      const kc = keyColors(k);
-      let total = base.get(k)!;
-      colors.forEach((c, i) => {
-        if (kc.includes(c)) total += counts[i];
-      });
-      result.set(k, total);
-    }
-    return result;
+  const landSources = (counts: number[], key: string, turn: number) => {
+    const kc = keyColors(key);
+    let total = fixedSources(counts).get(`${key}:${turn}`)!;
+    colors.forEach((c, i) => {
+      if (kc.includes(c)) total += counts[i];
+    });
+    return total;
   };
 
+  /** Fonti tra le terre per gruppo di colori (a partita avviata) */
+  const sourcesFor = (counts: number[]) => new Map(keys.map((k) => [k, landSources(counts, k, DISPLAY_TURN)]));
+
   const score = (counts: number[]): ManaBaseScore => {
-    const lands = sourcesFor(counts);
     const byCard = new Map<string, { copies: number; ok: boolean }>();
     let deficit = 0;
     let minRatio = Infinity;
 
     for (const r of requirements) {
       const req = required.get(r) ?? landCount + 1;
-      const src = lands.get(r.key)! + support.get(`${r.key}:${r.turn}`)!;
+      const src = landSources(counts, r.key, r.turn) + support.get(`${r.key}:${r.turn}`)!;
       const ratio = src / req;
       minRatio = Math.min(minRatio, ratio);
       if (src < req) deficit += (r.copies * (req - src)) / req;

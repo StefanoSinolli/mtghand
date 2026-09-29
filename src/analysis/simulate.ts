@@ -5,7 +5,7 @@
  * Le fonti non-terra non sono considerate: la simulazione valuta solo le terre.
  */
 
-import type { BasicType, CardProfile, TappedRule } from './cardProfile';
+import type { BasicType, CardProfile, Landcycling, TappedRule } from './cardProfile';
 import { landColors } from './manaBase';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 import { shuffle } from '../utils/shuffle';
@@ -44,11 +44,14 @@ interface SimLand {
   tapped: TappedRule;
   fetchTapped: boolean;
   basicTypes: BasicType[];
+  isBasic: boolean;
   isMdfc: boolean;
 }
 
 interface SimCard {
   land?: SimLand;
+  /** Landcycling: costo e terre che può cercare */
+  cycler?: Landcycling;
   manaValue: number;
 }
 
@@ -116,11 +119,12 @@ const buildLibrary = (profiles: CardProfile[]): SimCard[] => {
           tapped: p.land.tapped,
           fetchTapped: p.land.fetch?.entersTapped ?? false,
           basicTypes: p.land.basicTypes,
+          isBasic: p.land.isBasic,
           isMdfc: p.land.isMdfc,
         }
       : undefined;
     const manaValue = p.spells[0]?.manaValue ?? 0;
-    for (let i = 0; i < p.quantity; i++) cards.push({ land, manaValue });
+    for (let i = 0; i < p.quantity; i++) cards.push({ land, cycler: p.landcycling, manaValue });
   }
   return cards;
 };
@@ -141,8 +145,22 @@ const faceChecks = (profiles: CardProfile[], maxTurn: number): FaceCheck[] =>
 /** Terre desiderate in una mano di `size` carte */
 const idealLands = (size: number) => Math.max(2, Math.round(size * 0.43));
 
+/** Le carte con landcycling contano come terre nel decidere mulligan e fondo */
+const isLandish = (c: SimCard) => c.land !== undefined || c.cycler !== undefined;
+
+/** Indice nel mazzo della prima terra che il landcycling può trovare */
+const findCycleTarget = (deck: SimCard[], from: number, cycler: Landcycling) =>
+  deck.findIndex(
+    (c, i) =>
+      i >= from &&
+      c.land !== undefined &&
+      !c.land.isMdfc &&
+      (!cycler.basicOnly || c.land.isBasic) &&
+      (cycler.types.length === 0 || c.land.basicTypes.some((t) => cycler.types.includes(t))),
+  );
+
 const keepable = (hand: SimCard[], size: number) => {
-  const lands = hand.filter((c) => c.land).length;
+  const lands = hand.filter(isLandish).length;
   if (size >= 7) return lands >= 2 && lands <= 5;
   if (size === 6) return lands >= 2 && lands <= 4;
   if (size === 5) return lands >= 1 && lands <= 4;
@@ -154,16 +172,16 @@ const bottom = (hand: SimCard[], count: number) => {
   const kept = [...hand];
   const target = idealLands(hand.length - count);
   for (let i = 0; i < count; i++) {
-    const lands = kept.filter((c) => c.land).length;
+    const lands = kept.filter(isLandish).length;
     let index: number;
     if (lands > target) {
-      index = kept.findIndex((c) => c.land);
+      index = kept.findIndex(isLandish);
     } else {
       index = kept.reduce(
-        (best, c, j) => (!c.land && (best === -1 || c.manaValue > kept[best].manaValue) ? j : best),
+        (best, c, j) => (!isLandish(c) && (best === -1 || c.manaValue > kept[best].manaValue) ? j : best),
         -1,
       );
-      if (index === -1) index = kept.findIndex((c) => c.land);
+      if (index === -1) index = kept.findIndex(isLandish);
     }
     kept.splice(index, 1);
   }
@@ -227,19 +245,40 @@ export const simulate = (profiles: CardProfile[], options: SimulationOptions = {
         }
       });
 
-      if (bestIndex >= 0) {
-        const land = hand[bestIndex].land!;
+      const playLand = (land: SimLand) => {
         const tapped = entersTapped(land, battlefield);
         battlefield.push({ colors: land.colors, basicTypes: land.basicTypes, usableFrom: tapped ? turn + 1 : turn });
+      };
+
+      // Mana speso questo turno per ciclare
+      let spent = 0;
+
+      if (bestIndex >= 0) {
+        playLand(hand[bestIndex].land!);
         hand.splice(bestIndex, 1);
+      } else {
+        // Nessuna terra in mano: cicla un landcycler (se c'è il mana) e gioca la terra trovata
+        const usableNow = battlefield.filter((l) => l.usableFrom <= turn).length;
+        const cyclerIndex = hand.findIndex((c) => c.cycler && c.cycler.cost <= usableNow);
+        if (cyclerIndex >= 0) {
+          const cycler = hand[cyclerIndex].cycler!;
+          hand.splice(cyclerIndex, 1);
+          spent += cycler.cost;
+          const target = findCycleTarget(deck, drawIndex, cycler);
+          if (target >= 0) {
+            playLand(deck[target].land!);
+            deck.splice(target, 1);
+          }
+        }
       }
 
       const usable = battlefield.filter((l) => l.usableFrom <= turn);
+      const available = usable.length - spent;
       if (battlefield.length >= turn) landDrops[turn - 1]++;
-      if (usable.length >= turn) untappedDrops[turn - 1]++;
+      if (available >= turn) untappedDrops[turn - 1]++;
 
       checks.forEach((check, i) => {
-        if (check.turn !== turn || usable.length < turn) return;
+        if (check.turn !== turn || available < turn) return;
         withLands[i]++;
         if (canPay(check.pips, usable)) castable[i]++;
       });
