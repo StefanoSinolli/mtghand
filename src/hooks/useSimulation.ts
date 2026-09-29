@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CardProfile } from '../analysis/cardProfile';
-import type { SimulationResult } from '../analysis/simulate';
+import type { SimulationOptions, SimulationResult } from '../analysis/simulate';
 import type { SimulationRequest } from '../analysis/simulate.worker';
 
 /**
@@ -13,7 +13,7 @@ export const useSimulation = () => {
 
   useEffect(() => () => workerRef.current?.terminate(), []);
 
-  const run = useCallback((profiles: CardProfile[], excludeCards: string[] = [], games = 10000) => {
+  const run = useCallback((profiles: CardProfile[], options: Omit<SimulationOptions, 'random'> = {}) => {
     workerRef.current?.terminate();
     const worker = new Worker(new URL('../analysis/simulate.worker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
@@ -29,7 +29,7 @@ export const useSimulation = () => {
       setRunning(false);
     };
 
-    const request: SimulationRequest = { profiles, options: { games, excludeCards } };
+    const request: SimulationRequest = { profiles, options: { games: 10000, ...options } };
     worker.postMessage(request);
   }, []);
 

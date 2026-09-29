@@ -12,7 +12,7 @@ import type { Deck } from '../types';
 
 export default function DeckListPage() {
   const decks = useDecks();
-  const names = useMemo(() => decks.flatMap((d) => d.main.map((e) => e.name)), [decks]);
+  const names = useMemo(() => decks.flatMap((d) => [...(d.commanders ?? []), ...d.main].map((e) => e.name)), [decks]);
   const { cards, loading } = useCards(names);
 
   const sorted = useMemo(() => [...decks].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [decks]);
@@ -76,6 +76,11 @@ function DeckTile({ deck, summary, loading }: { deck: Deck; summary: DeckSummary
 
         <div className="relative -mt-8 px-5 pb-4">
           <h2 className="truncate font-display text-xl font-bold tracking-wide text-stone-50">{deck.name}</h2>
+          {deck.format === 'commander' && (
+            <span className="absolute top-0 right-5 rounded-full bg-gold-400/90 px-2 py-0.5 text-[11px] font-bold text-felt-950">
+              Commander
+            </span>
+          )}
           <p className="mt-1 text-sm text-stone-400">
             {summary.mainCount} carte · {summary.lands} terre
             {summary.sideCount > 0 && ` · side ${summary.sideCount}`}

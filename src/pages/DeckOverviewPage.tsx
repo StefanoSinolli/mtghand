@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { groupByType, summarizeDeck } from '../utils/deckSummary';
+import { countCards } from '../utils/deckParser';
 import { isPlaceholder, type DisplayCard } from '../types';
 import CardImage from '../components/cards/CardImage';
 import CardModal from '../components/cards/CardModal';
@@ -30,7 +31,7 @@ export default function DeckOverviewPage() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-          <Panel title="Curva di mana" subtitle={`Costo medio ${summary.averageManaValue.toFixed(2)}`}>
+          <Panel title="Curva di mana" subtitle={`Costo medio stampato ${summary.averageManaValue.toFixed(2)} · quello effettivo è nell'Analisi`}>
             <ManaCurve curve={summary.curve} />
           </Panel>
           <Panel className="flex flex-col justify-center gap-2 sm:w-56">
@@ -43,7 +44,24 @@ export default function DeckOverviewPage() {
           </Panel>
         </div>
 
-        <Panel title={`Main deck · ${summary.mainCount}`}>
+        {summary.commanders.length > 0 && (
+          <Panel title={summary.commanders.length === 1 ? 'Comandante' : 'Comandanti'}>
+            <div className="flex flex-wrap gap-4">
+              {summary.commanders.map((c) => (
+                <button
+                  key={c.id}
+                  className="w-40 cursor-pointer transition-transform hover:-translate-y-1"
+                  onMouseEnter={() => setPreview(c)}
+                  onClick={() => setDetails(c)}
+                >
+                  <CardImage card={c} />
+                </button>
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        <Panel title={deck.format === 'commander' ? `Mazzo · ${countCards(deck.main)}` : `Main deck · ${summary.mainCount}`}>
           {loading && cards.size === 0 ? (
             <p className="animate-pulse text-stone-400">Carico le carte…</p>
           ) : (

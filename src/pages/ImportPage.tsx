@@ -2,7 +2,8 @@ import { useMemo, useState, type DragEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { createDeck } from '../services/deckStorage';
 import { saveDeck } from '../store/decks';
-import { countCards, parseDeckList } from '../utils/deckParser';
+import { buildImport, commanderCandidates, countCards, parseDeckList, suggestFormat } from '../utils/deckParser';
+import type { DeckFormat } from '../types';
 import Button from '../components/ui/Button';
 import Panel from '../components/ui/Panel';
 
@@ -20,9 +21,19 @@ export default function ImportPage() {
   const [text, setText] = useState('');
   const [dragging, setDragging] = useState(false);
 
+  const [formatChoice, setFormatChoice] = useState<DeckFormat | null>(null);
+  const [picked, setPicked] = useState('');
+
   const parsed = useMemo(() => parseDeckList(text), [text]);
-  const mainCount = countCards(parsed.main);
-  const sideCount = countCards(parsed.side);
+  const suggestion = useMemo(() => suggestFormat(parsed), [parsed]);
+  // la spunta segue il suggerimento finché l'utente non la cambia
+  const format = formatChoice ?? suggestion.format;
+  const isCommander = format === 'commander';
+  const result = useMemo(() => buildImport(parsed, format, picked || undefined), [parsed, format, picked]);
+  const needsPick = isCommander && suggestion.commanders.length === 0 && parsed.commanders.length === 0;
+  const mainCount = countCards(result.main);
+  const sideCount = countCards(result.side);
+  const commanderCount = countCards(result.commanders);
 
   const loadFile = async (file: File) => {
     setText(await file.text());
@@ -37,7 +48,7 @@ export default function ImportPage() {
   };
 
   const handleImport = () => {
-    const deck = createDeck(name.trim() || 'Nuovo mazzo', parsed.main, parsed.side);
+    const deck = createDeck(name.trim() || 'Nuovo mazzo', result.main, result.side, format, result.commanders);
     saveDeck(deck);
     navigate(`/deck/${deck.id}`);
   };
@@ -105,23 +116,74 @@ export default function ImportPage() {
 
         <div className="space-y-4">
           <Panel title="Anteprima">
+            <label className="mb-4 flex cursor-pointer items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={isCommander}
+                onChange={(e) => setFormatChoice(e.target.checked ? 'commander' : 'constructed60')}
+                className="h-4 w-4 accent-gold-400"
+              />
+              <span className="text-sm font-semibold text-stone-200">Mazzo Commander</span>
+              {formatChoice === null && suggestion.format === 'commander' && (
+                <span className="ml-auto text-xs text-gold-300">riconosciuto</span>
+              )}
+            </label>
+
+            {isCommander && (
+              <div className="mb-4 rounded-xl bg-black/20 p-3 text-sm">
+                <p className="text-xs text-stone-500">Comandante</p>
+                {needsPick ? (
+                  <select
+                    value={picked}
+                    onChange={(e) => setPicked(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-felt-900 px-2 py-1.5 text-stone-100"
+                  >
+                    <option value="">Scegli il comandante…</option>
+                    {commanderCandidates(parsed.main).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="mt-0.5 font-semibold text-gold-200">
+                    {result.commanders.map((c) => c.name).join(' + ') || '—'}
+                  </p>
+                )}
+              </div>
+            )}
+
             <dl className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-black/20 p-3">
-                <dt className="text-xs text-stone-500">Main</dt>
-                <dd className={`text-2xl font-bold ${mainCount >= 60 ? 'text-emerald-300' : 'text-stone-100'}`}>
-                  {mainCount}
+                <dt className="text-xs text-stone-500">{isCommander ? 'Totale' : 'Main'}</dt>
+                <dd
+                  className={`text-2xl font-bold ${
+                    (isCommander ? mainCount + commanderCount === 100 : mainCount >= 60) ? 'text-emerald-300' : 'text-stone-100'
+                  }`}
+                >
+                  {isCommander ? mainCount + commanderCount : mainCount}
                 </dd>
               </div>
-              <div className="rounded-xl bg-black/20 p-3">
-                <dt className="text-xs text-stone-500">Sideboard</dt>
-                <dd className={`text-2xl font-bold ${sideCount > 15 ? 'text-red-300' : 'text-stone-100'}`}>{sideCount}</dd>
-              </div>
+              {isCommander ? (
+                <div className="rounded-xl bg-black/20 p-3">
+                  <dt className="text-xs text-stone-500">Nel grimorio</dt>
+                  <dd className="text-2xl font-bold text-stone-100">{mainCount}</dd>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-black/20 p-3">
+                  <dt className="text-xs text-stone-500">Sideboard</dt>
+                  <dd className={`text-2xl font-bold ${sideCount > 15 ? 'text-red-300' : 'text-stone-100'}`}>{sideCount}</dd>
+                </div>
+              )}
             </dl>
             <p className="mt-3 text-sm text-stone-400">
-              {parsed.main.length + parsed.side.length} carte diverse riconosciute.
+              {parsed.main.length + parsed.side.length + parsed.commanders.length} carte diverse riconosciute.
             </p>
-            {mainCount > 0 && mainCount < 60 && (
+            {!isCommander && mainCount > 0 && mainCount < 60 && (
               <p className="mt-2 text-sm text-gold-300">Nel Constructed il main deck deve avere almeno 60 carte.</p>
+            )}
+            {isCommander && mainCount > 0 && mainCount + commanderCount !== 100 && (
+              <p className="mt-2 text-sm text-gold-300">Nel Commander le carte devono essere esattamente 100, comandante incluso.</p>
             )}
             {parsed.unrecognized.length > 0 && (
               <div className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm">
@@ -149,6 +211,11 @@ export default function ImportPage() {
               <li>
                 Sideboard dopo <code className="text-stone-200">Sideboard</code>, una riga vuota o{' '}
                 <code className="text-stone-200">SB:</code>
+              </li>
+              <li>
+                Comandante: sezione <code className="text-stone-200">Commander</code>,{' '}
+                <code className="text-stone-200">*CMDR*</code> (Moxfield) o{' '}
+                <code className="text-stone-200">[Commander]</code> (Archidekt)
               </li>
             </ul>
           </Panel>

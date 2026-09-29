@@ -3,7 +3,7 @@
  * In futuro questo file sarà modificato per usare Firebase
  */
 
-import type { Deck, DeckEntry } from '../types';
+import type { Deck, DeckEntry, DeckFormat } from '../types';
 
 const STORAGE_KEY = 'mtg_decks';
 
@@ -91,14 +91,21 @@ export const deleteDeck = (deckId: string) => {
 
 export const getDeck = (deckId: string) => getDecks().find((d) => d.id === deckId);
 
-export const createDeck = (name: string, main: DeckEntry[], side: DeckEntry[] = []): Deck => {
+export const createDeck = (
+  name: string,
+  main: DeckEntry[],
+  side: DeckEntry[] = [],
+  format: DeckFormat = 'constructed60',
+  commanders: DeckEntry[] = [],
+): Deck => {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
     name,
-    format: 'constructed60',
+    format,
     main,
     side,
+    ...(format === 'commander' ? { commanders } : {}),
     schemaVersion: 2,
     createdAt: now,
     updatedAt: now,

@@ -7,6 +7,7 @@ import { ColorKey } from '../components/ui/ManaCost';
 import {
   HAND_SIZE,
   canMulligan,
+  cardsToBottom,
   confirmBottom,
   keep,
   mulligan,
@@ -15,6 +16,8 @@ import {
   type HandState,
 } from '../game/london';
 import { primaryType } from '../utils/deckSummary';
+import { rulesFor } from '../formats';
+import CardImage from '../components/cards/CardImage';
 import { isPlaceholder, type DisplayCard, type ManaColor } from '../types';
 import { useDeckContext } from './deckContext';
 
@@ -30,7 +33,9 @@ function Kbd({ children }: { children: string }) {
 
 export default function HandPage() {
   const { deck, getCard, loading, error } = useDeckContext();
-  const [game, setGame] = useState<HandState>(() => newGame(deck.main));
+  const rules = rulesFor(deck.format);
+  const gameOptions = useMemo(() => ({ freeFirstMulligan: rules.freeFirstMulligan }), [rules.freeFirstMulligan]);
+  const [game, setGame] = useState<HandState>(() => newGame(deck.main, gameOptions));
   const [dealKey, setDealKey] = useState(0);
   const [details, setDetails] = useState<DisplayCard | null>(null);
 
@@ -43,9 +48,9 @@ export default function HandPage() {
   const doKeep = useCallback(() => setGame((g) => keep(g)), []);
   const doConfirm = useCallback(() => setGame((g) => confirmBottom(g)), []);
   const doNewHand = useCallback(() => {
-    setGame(newGame(deck.main));
+    setGame(newGame(deck.main, gameOptions));
     setDealKey((k) => k + 1);
-  }, [deck.main]);
+  }, [deck.main, gameOptions]);
 
   // Scorciatoie da tastiera
   useEffect(() => {
@@ -78,8 +83,10 @@ export default function HandPage() {
   );
   const colorKey = WUBRG.filter((c) => colors.has(c)).join('');
 
-  const toBottom = game.mulligans;
-  const handSize = HAND_SIZE - game.mulligans;
+  const toBottom = cardsToBottom(game);
+  const handSize = HAND_SIZE - toBottom;
+  const freeMulliganNow = game.freeMulligan && game.mulligans === 1;
+  const commanders = (deck.commanders ?? []).map((c) => getCard(c.name));
 
   const onCardClick = (uid: string) => {
     if (game.phase === 'bottoming') {
@@ -112,6 +119,22 @@ export default function HandPage() {
         )}
       </div>
 
+      {commanders.length > 0 && (
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold tracking-wider text-stone-500 uppercase">Zona di comando</span>
+          {commanders.map((c) => (
+            <button
+              key={c.name}
+              className="w-16 cursor-pointer transition-transform hover:-translate-y-0.5 sm:w-20"
+              onClick={() => setDetails(c)}
+              aria-label={`${c.name} (comandante)`}
+            >
+              <CardImage card={c} size="small" />
+            </button>
+          ))}
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={game.phase === 'bottoming' ? 'bottom' : game.phase === 'kept' ? 'kept' : `decide-${game.mulligans}`}
@@ -123,8 +146,12 @@ export default function HandPage() {
           {game.phase === 'deciding' && (
             <p className="font-display text-lg text-stone-200">
               {game.mulligans === 0
-                ? 'Mano iniziale: tieni o mulligan?'
-                : `Mulligan ${game.mulligans}: tieni ${handSize} carte o rimescoli?`}
+                ? rules.freeFirstMulligan
+                  ? 'Mano iniziale: tieni o mulligan? Il primo è gratuito'
+                  : 'Mano iniziale: tieni o mulligan?'
+                : freeMulliganNow
+                  ? 'Mulligan gratuito: tieni 7 carte o rimescoli?'
+                  : `Mulligan ${game.mulligans}: tieni ${handSize} carte o rimescoli?`}
             </p>
           )}
           {game.phase === 'bottoming' && (
@@ -156,7 +183,7 @@ export default function HandPage() {
               <Kbd>M</Kbd>
             </Button>
             <Button size="lg" variant="primary" onClick={doKeep}>
-              Keep{game.mulligans > 0 && ` ${handSize}`}
+              Keep{handSize < HAND_SIZE && ` ${handSize}`}
               <Kbd>K</Kbd>
             </Button>
           </>

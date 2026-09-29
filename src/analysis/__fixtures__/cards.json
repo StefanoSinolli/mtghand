@@ -12,7 +12,10 @@
   ],
   "color_identity": [
    "R"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "d6bfa227-4309-40ed-952c-279595eab17e",
@@ -58,7 +61,10 @@
   ],
   "produced_mana": [
    "R"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "f3cc07cd-cc79-4745-b0b7-eade60175cc3",
@@ -74,7 +80,10 @@
   ],
   "produced_mana": [
    "U"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "dce15387-4114-4b3e-91aa-5b42b45c44ac",
@@ -90,7 +99,10 @@
   ],
   "produced_mana": [
    "G"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "8ab0f4c0-b331-4c57-b68f-2e24bb5ba06c",
@@ -106,7 +118,10 @@
   ],
   "produced_mana": [
    "W"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "b7387103-1df1-4fd0-9e91-1544509792c7",
@@ -122,7 +137,10 @@
   ],
   "produced_mana": [
    "B"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "c36820fa-ee86-4206-9a0d-737a67cf5208",
@@ -171,7 +189,10 @@
   ],
   "color_identity": [
    "U"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "96f866ec-a163-4095-b088-d93fa0b6f6f7",
@@ -282,7 +303,10 @@
   ],
   "produced_mana": [
    "G"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "18303862-4726-4136-814f-157aa7006579",
@@ -888,7 +912,10 @@
    "R",
    "U",
    "W"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "c6b6117c-faab-4bbb-b851-07bd8061ef03",
@@ -906,7 +933,10 @@
    "R",
    "U",
    "W"
-  ]
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  },
  {
   "id": "b30a8f92-ce42-4b27-a893-bcf97fde228d",
@@ -1948,5 +1978,280 @@
   "color_identity": [
    "U"
   ]
+ },
+ {
+  "id": "824b2d73-2151-4e5e-9f05-8f63e2bdcaa9",
+  "name": "Krenko, Mob Boss",
+  "layout": "normal",
+  "mana_cost": "{2}{R}{R}",
+  "cmc": 4.0,
+  "type_line": "Legendary Creature — Goblin Warrior",
+  "oracle_text": "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "d0d33d52-3d28-4635-b985-51e126289259",
+  "name": "Atraxa, Praetors' Voice",
+  "layout": "normal",
+  "mana_cost": "{G}{W}{U}{B}",
+  "cmc": 4.0,
+  "type_line": "Legendary Creature — Phyrexian Angel Horror",
+  "oracle_text": "Flying, vigilance, deathtouch, lifelink\nAt the beginning of your end step, proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+  "colors": [
+   "B",
+   "G",
+   "U",
+   "W"
+  ],
+  "color_identity": [
+   "B",
+   "G",
+   "U",
+   "W"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "21e27b91-c7f1-4709-aa0d-8b5d81b22a0a",
+  "name": "Thrasios, Triton Hero",
+  "layout": "normal",
+  "mana_cost": "{G}{U}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Merfolk Wizard",
+  "oracle_text": "{4}: Scry 1, then reveal the top card of your library. If it's a land card, put it onto the battlefield tapped. Otherwise, draw a card.\nPartner (You can have two commanders if both have partner.)",
+  "colors": [
+   "G",
+   "U"
+  ],
+  "color_identity": [
+   "G",
+   "U"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "bc7cbe9b-324e-42b8-94e2-36e91cb32163",
+  "name": "Tymna the Weaver",
+  "layout": "normal",
+  "mana_cost": "{1}{W}{B}",
+  "cmc": 3.0,
+  "type_line": "Legendary Creature — Human Cleric",
+  "oracle_text": "Lifelink\nAt the beginning of each of your postcombat main phases, you may pay X life, where X is the number of opponents that were dealt combat damage this turn. If you do, draw X cards.\nPartner (You can have two commanders if both have partner.)",
+  "colors": [
+   "B",
+   "W"
+  ],
+  "color_identity": [
+   "B",
+   "W"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "dfe0daf8-43da-484b-baa1-76f8313c5a0c",
+  "name": "Wilson, Refined Grizzly",
+  "layout": "normal",
+  "mana_cost": "{1}{G}",
+  "cmc": 2.0,
+  "type_line": "Legendary Creature — Bear Warrior",
+  "oracle_text": "This spell can't be countered.\nReach, vigilance, trample\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)\nChoose a Background (You can have a Background as a second commander.)",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "11c93414-935e-462b-ad89-27ca21d01bf9",
+  "name": "Raised by Giants",
+  "layout": "normal",
+  "mana_cost": "{5}{G}",
+  "cmc": 6.0,
+  "type_line": "Legendary Enchantment — Background",
+  "oracle_text": "Commander creatures you own have base power and toughness 10/10 and are Giants in addition to their other types.",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "1925dc45-4dee-4772-aa16-3b4ca54be6c7",
+  "name": "Grist, the Hunger Tide",
+  "layout": "normal",
+  "mana_cost": "{1}{B}{G}",
+  "cmc": 3.0,
+  "type_line": "Legendary Planeswalker — Grist",
+  "oracle_text": "As long as Grist isn't on the battlefield, it's a 1/1 Insect creature in addition to its other types.\n+1: Create a 1/1 black and green Insect creature token, then mill a card. If an Insect card was milled this way, put a loyalty counter on Grist and repeat this process.\n−2: You may sacrifice a creature. When you do, destroy target creature or planeswalker.\n−5: Each opponent loses life equal to the number of creature cards in your graveyard.",
+  "colors": [
+   "B",
+   "G"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "8ee443cc-e17a-493b-9c93-1f9e141a30e4",
+  "name": "Sol Ring",
+  "layout": "normal",
+  "mana_cost": "{1}",
+  "cmc": 1.0,
+  "type_line": "Artifact",
+  "oracle_text": "{T}: Add {C}{C}.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "4d960186-4559-4af0-bd22-63baa15f8939",
+  "name": "Mana Crypt",
+  "layout": "normal",
+  "mana_cost": "{0}",
+  "cmc": 0.0,
+  "type_line": "Artifact",
+  "oracle_text": "At the beginning of your upkeep, flip a coin. If you lose the flip, this artifact deals 3 damage to you.\n{T}: Add {C}{C}.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "C"
+  ],
+  "legalities": {
+   "commander": "banned"
+  }
+ },
+ {
+  "id": "9e2e3efb-75cb-430f-b9f4-cb58f3aeb91b",
+  "name": "Dockside Extortionist",
+  "layout": "normal",
+  "mana_cost": "{1}{R}",
+  "cmc": 2.0,
+  "type_line": "Creature — Goblin Pirate",
+  "oracle_text": "When this creature enters, create X Treasure tokens, where X is the number of artifacts and enchantments your opponents control. (Treasure tokens are artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ],
+  "legalities": {
+   "commander": "banned"
+  }
+ },
+ {
+  "id": "8ee0fdd4-1fb5-4160-b408-2c51ef4f85d0",
+  "name": "Goblin Matron",
+  "layout": "normal",
+  "mana_cost": "{2}{R}",
+  "cmc": 3.0,
+  "type_line": "Creature — Goblin",
+  "oracle_text": "When this creature enters, you may search your library for a Goblin card, reveal that card, put it into your hand, then shuffle.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "7bc508b3-8b38-4cf0-89a7-a2cb247ed083",
+  "name": "Skirk Prospector",
+  "layout": "normal",
+  "mana_cost": "{R}",
+  "cmc": 1.0,
+  "type_line": "Creature — Goblin",
+  "oracle_text": "Sacrifice a Goblin: Add {R}.",
+  "colors": [
+   "R"
+  ],
+  "color_identity": [
+   "R"
+  ],
+  "produced_mana": [
+   "R"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "1ac6cb62-45da-4e9a-84c6-09e6eacf0664",
+  "name": "Command Tower",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+  "colors": [],
+  "color_identity": [],
+  "produced_mana": [
+   "B",
+   "G",
+   "R",
+   "U",
+   "W"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
+ },
+ {
+  "id": "75f47b6e-9557-4853-b8d6-7602a91c59a7",
+  "name": "Relentless Rats",
+  "layout": "normal",
+  "mana_cost": "{1}{B}{B}",
+  "cmc": 3.0,
+  "type_line": "Creature — Rat",
+  "oracle_text": "This creature gets +1/+1 for each other creature on the battlefield named Relentless Rats.\nA deck can have any number of cards named Relentless Rats.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ],
+  "legalities": {
+   "commander": "legal"
+  }
  }
 ]

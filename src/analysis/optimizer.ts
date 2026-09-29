@@ -8,7 +8,7 @@ import type { ScryfallCard } from '../types';
 import { BASIC_TYPE_COLOR, COLOR_BASIC_NAME, type BasicType, type CardProfile } from './cardProfile';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 import { collectRequirements, countLands, landLikeSource, type Requirement } from './manaBase';
-import { requiredSources } from './probability';
+import { CONSTRUCTED_MODEL, requiredSources, type ManaModel } from './probability';
 
 export interface ManaBaseScore {
   /** Somma pesata (per copie) delle fonti mancanti in proporzione alle richieste */
@@ -92,9 +92,10 @@ const buildEvaluator = (
   requirements: Requirement[],
   deckSize: number,
   landCount: number,
+  model: ManaModel,
 ): Evaluator => {
   const keys = [...new Set(requirements.map((r) => r.key))];
-  const required = new Map(requirements.map((r) => [r, requiredSources(deckSize, landCount, r.turn, r.pips)]));
+  const required = new Map(requirements.map((r) => [r, requiredSources(deckSize, landCount, r.turn, r.pips, model)]));
 
   // Fonti non-terra per chiave e turno (non dipendono dalle base)
   const support = new Map<string, number>();
@@ -196,18 +197,105 @@ const better = (a: ManaBaseScore, aChanges: number, b: ManaBaseScore, bChanges: 
   return a.minRatio > b.minRatio + EPSILON;
 };
 
+/** Oltre questo numero di combinazioni si passa dalla ricerca esaustiva a quella locale */
+const EXHAUSTIVE_LIMIT = 20000;
+
+const combinations = (pool: number, parts: number) => {
+  let result = 1;
+  for (let i = 1; i < parts; i++) result = (result * (pool + i)) / i;
+  return result;
+};
+
+/**
+ * Cerca la distribuzione migliore: esaustiva per spazi piccoli (60 carte), altrimenti ricerca
+ * locale (Commander con molte base): da più punti di partenza sposta una base alla volta
+ * finché il punteggio migliora.
+ */
+const search = (
+  pool: number,
+  parts: number,
+  current: number[],
+  evaluator: Evaluator,
+  changesFrom: (counts: number[]) => number,
+) => {
+  const isBetter = (a: number[], sa: ManaBaseScore, b: number[], sb: ManaBaseScore) =>
+    better(sa, changesFrom(a), sb, changesFrom(b));
+
+  if (combinations(pool, parts) <= EXHAUSTIVE_LIMIT) {
+    let best: number[] = [];
+    let bestScore: ManaBaseScore | null = null;
+    for (const counts of compositions(pool, parts)) {
+      const score = evaluator.score(counts);
+      if (!bestScore || isBetter(counts, score, best, bestScore)) {
+        best = counts;
+        bestScore = score;
+      }
+    }
+    return { counts: best, score: bestScore! };
+  }
+
+  // Punti di partenza: la distribuzione attuale adattata al totale, e una divisione uniforme
+  const fit = (counts: number[]) => {
+    const total = counts.reduce((a, b) => a + b, 0);
+    const scaled = counts.map((c) => (total > 0 ? Math.floor((c * pool) / total) : Math.floor(pool / parts)));
+    let rest = pool - scaled.reduce((a, b) => a + b, 0);
+    for (let i = 0; rest > 0; i = (i + 1) % parts, rest--) scaled[i]++;
+    return scaled;
+  };
+  const starts = [fit(current), fit(new Array(parts).fill(1))];
+
+  let best = starts[0];
+  let bestScore = evaluator.score(best);
+  for (const start of starts) {
+    let counts = start;
+    let score = evaluator.score(counts);
+    for (let improved = true; improved; ) {
+      improved = false;
+      for (let from = 0; from < parts; from++) {
+        if (counts[from] === 0) continue;
+        for (let to = 0; to < parts; to++) {
+          if (to === from) continue;
+          const next = [...counts];
+          next[from]--;
+          next[to]++;
+          const nextScore = evaluator.score(next);
+          if (isBetter(next, nextScore, counts, score)) {
+            counts = next;
+            score = nextScore;
+            improved = true;
+          }
+        }
+      }
+    }
+    if (isBetter(counts, score, best, bestScore)) {
+      best = counts;
+      bestScore = score;
+    }
+  }
+  return { counts: best, score: bestScore };
+};
+
 /**
  * Propone una distribuzione delle terre base.
- * @param landDelta terre base da aggiungere (positivo) o togliere (negativo)
  */
+export interface OptimizerOptions {
+  /** Terre base da aggiungere (positivo) o togliere (negativo) */
+  landDelta?: number;
+  /** Carte da ignorare (es. giocabili solo dal cimitero) */
+  exclude?: ReadonlySet<string>;
+  model?: ManaModel;
+  /** Requisiti fuori dal mazzo, es. il comandante */
+  extraRequirements?: Requirement[];
+}
+
 export const optimizeBasics = (
   deck: CardProfile[],
   deckSize: number,
-  landDelta = 0,
-  /** Carte da ignorare (es. giocabili solo dal cimitero) */
-  exclude: ReadonlySet<string> = new Set(),
+  { landDelta = 0, exclude = new Set(), model = CONSTRUCTED_MODEL, extraRequirements = [] }: OptimizerOptions = {},
 ): OptimizerProposal | null => {
-  const requirements = collectRequirements(deck).filter((r) => !r.alternative && !exclude.has(r.card));
+  const requirements = [...collectRequirements(deck), ...extraRequirements].filter(
+    (r) => !r.alternative && !exclude.has(r.card),
+  );
   const demanded = new Set(requirements.flatMap((r) => keyColors(r.key)));
   const colors = BASIC_COLORS.filter((c) => demanded.has(c));
   if (colors.length === 0) return null;
@@ -235,26 +323,16 @@ export const optimizeBasics = (
   const landsBefore = fixedLandCount + currentBasics;
   const landsAfter = fixedLandCount + pool;
 
-  const evalBefore = buildEvaluator(fixed, basicProfiles, colors, requirements, deckSize, Math.max(1, Math.round(landsBefore)));
+  const evalBefore = buildEvaluator(fixed, basicProfiles, colors, requirements, deckSize, Math.max(1, Math.round(landsBefore)), model);
   const evalAfter =
     landDelta === 0
       ? evalBefore
-      : buildEvaluator(fixed, basicProfiles, colors, requirements, deckSize, Math.max(1, Math.round(landsAfter)));
+      : buildEvaluator(fixed, basicProfiles, colors, requirements, deckSize, Math.max(1, Math.round(landsAfter)), model);
 
   const changesFrom = (counts: number[]) =>
     counts.reduce((s, c, i) => s + Math.abs(c - currentCounts[i]), 0) + offColorBasics;
 
-  let best: number[] | null = null;
-  let bestScore: ManaBaseScore | null = null;
-  for (const counts of compositions(pool, colors.length)) {
-    const s = evalAfter.score(counts);
-    if (!best || better(s, changesFrom(counts), bestScore!, changesFrom(best))) {
-      best = counts;
-      bestScore = s;
-    }
-  }
-  if (!best || !bestScore) return null;
-
+  const { counts: best, score: bestScore } = search(pool, colors.length, currentCounts, evalAfter, changesFrom);
   const before = evalBefore.score(currentCounts);
   const sourcesBefore = evalBefore.sourcesFor(currentCounts);
   const sourcesAfter = evalAfter.sourcesFor(best);

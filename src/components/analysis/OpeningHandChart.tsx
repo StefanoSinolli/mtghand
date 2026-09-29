@@ -2,7 +2,16 @@ import { motion } from 'motion/react';
 import type { OpeningHandStats } from '../../analysis/analyze';
 import { pct } from './format';
 
-export default function OpeningHandChart({ stats }: { stats: OpeningHandStats }) {
+interface OpeningHandChartProps {
+  stats: OpeningHandStats;
+  /** Commander multiplayer: si pesca al turno 1, una sola riga */
+  multiplayer?: boolean;
+}
+
+export default function OpeningHandChart({ stats, multiplayer = false }: OpeningHandChartProps) {
+  const rows = multiplayer ? (['draw'] as const) : (['play', 'draw'] as const);
+  const rowLabel = (side: 'play' | 'draw') =>
+    multiplayer ? 'Multiplayer (pescata al T1)' : side === 'play' ? 'On the play' : 'On the draw';
   const max = Math.max(...stats.distribution);
 
   return (
@@ -43,9 +52,9 @@ export default function OpeningHandChart({ stats }: { stats: OpeningHandStats })
             </tr>
           </thead>
           <tbody className="tabular-nums">
-            {(['play', 'draw'] as const).map((side) => (
+            {rows.map((side) => (
               <tr key={side} className="border-t border-white/5">
-                <td className="py-1.5 text-stone-300">{side === 'play' ? 'On the play' : 'On the draw'}</td>
+                <td className="py-1.5 text-stone-300">{rowLabel(side)}</td>
                 {stats.landDrops.map((d) => (
                   <td key={d.turn} className="px-2 py-1.5 text-right">
                     {pct(d[side])}

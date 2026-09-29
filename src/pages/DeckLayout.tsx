@@ -33,7 +33,7 @@ export default function DeckLayout() {
   const art = summary.cover ? getCardImage(summary.cover, 'art_crop') : null;
 
   const handleExport = async () => {
-    await navigator.clipboard.writeText(formatDeckList(deck.main, deck.side));
+    await navigator.clipboard.writeText(formatDeckList(deck.main, deck.side, deck.commanders ?? []));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -72,6 +72,9 @@ export default function DeckLayout() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 {summary.colors.length > 0 && <ColorKey colorKey={summary.colors.join('')} size="lg" />}
+                {deck.format === 'commander' && (
+                  <span className="rounded-full bg-gold-400/90 px-2 py-0.5 text-xs font-bold text-felt-950">Commander</span>
+                )}
                 {deck.isTestDeck && (
                   <span className="rounded-full bg-gold-400/15 px-2 py-0.5 text-xs font-semibold text-gold-300">
                     Mazzo di prova
@@ -83,8 +86,7 @@ export default function DeckLayout() {
               </h1>
               <p className="mt-1 text-sm text-stone-400">
                 {summary.mainCount} carte · {summary.lands} terre
-                {summary.sideCount > 0 && ` · sideboard ${summary.sideCount}`} · costo medio{' '}
-                {summary.averageManaValue.toFixed(2)}
+                {summary.sideCount > 0 && ` · sideboard ${summary.sideCount}`}
               </p>
             </div>
             <div className="flex gap-2">

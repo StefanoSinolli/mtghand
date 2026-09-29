@@ -15,6 +15,11 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
   - numero di terre consigliato (formula di Karsten) e probabilità della mano iniziale
   - distribuzione ottimale delle terre base, applicabile al mazzo con un clic
   - simulazione Monte Carlo di 10.000 partite in un Web Worker
+- ✅ Formato Commander (spunta sul mazzo): comandante in zona di comando, primo mulligan gratuito e
+  pescata al turno 1, formula terre per 99 carte, controlli su 100 carte, singleton, identità di colore,
+  carte bannate e partner
+- ✅ Soglie delle fonti colorate calcolate con il modello completo di Karsten (strategia di mulligan
+  inclusa): riproduce le sue tabelle 2022 per 40, 60 e 99 carte
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
 
@@ -89,7 +94,9 @@ src/
 │   ├── charts/            # Curva di mana
 │   ├── layout/            # AppShell, Logo
 │   └── ui/                # Button, Panel, Modal, ConfirmDialog, ManaCost
-├── game/london.ts         # Mano iniziale e London mulligan
+├── formats.ts             # Regole dei formati (Constructed, Commander)
+├── game/london.ts         # Mano iniziale e London mulligan (anche gratuito)
+├── game/mulliganStrategy.ts # Strategia di mulligan di Karsten
 ├── hooks/                 # useDeckCards/useCards, useSimulation, useElementWidth
 ├── pages/                 # Lista mazzi, Import, Editor, Panoramica, Mano, Analisi
 ├── services/              # deckStorage (LocalStorage), scryfall (API + cache IndexedDB)

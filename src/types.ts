@@ -2,7 +2,7 @@
  * Modello dati condiviso dell'applicazione
  */
 
-export type DeckFormat = 'constructed60';
+export type DeckFormat = 'constructed60' | 'commander';
 
 export interface DeckEntry {
   name: string;
@@ -17,6 +17,8 @@ export interface Deck {
   format: DeckFormat;
   main: DeckEntry[];
   side: DeckEntry[];
+  /** Comandante (o due partner), fuori dal grimorio: solo formato Commander */
+  commanders?: DeckEntry[];
   schemaVersion: 2;
   createdAt: string;
   updatedAt: string;

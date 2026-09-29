@@ -4,6 +4,7 @@
 
 import type { DeckAnalysis } from './analyze';
 import { landColors, type LandTotals } from './manaBase';
+import type { CardProfile } from './cardProfile';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 
 export type WarningSeverity = 'error' | 'warning' | 'info';
@@ -51,6 +52,139 @@ const pct = (p: number) => `${Math.round(p * 100)}%`;
 
 const SEVERITY_ORDER: Record<WarningSeverity, number> = { error: 0, warning: 1, info: 2 };
 
+const oracleOf = (p: CardProfile) =>
+  [p.card.oracle_text, ...(p.card.card_faces ?? []).map((f) => f.oracle_text)].filter(Boolean).join('\n');
+
+const frontTypeOf = (p: CardProfile) => p.card.card_faces?.[0]?.type_line ?? p.card.type_line;
+
+/** Carte che ignorano il limite di copie ("A deck can have any number of cards named …") */
+const anyNumberAllowed = (p: CardProfile) =>
+  p.land?.isBasic === true || /a deck can have any number of cards named/i.test(oracleOf(p));
+
+const constructedWarnings = (a: DeckAnalysis): Warning[] => {
+  const warnings: Warning[] = [];
+  const min = a.rules.deckSize;
+
+  if (a.deckSize < min) {
+    warnings.push({ id: 'deck-size', severity: 'error', title: `Il mazzo ha ${a.deckSize} carte: nel Constructed il minimo è ${min}` });
+  } else if (a.deckSize > min) {
+    warnings.push({
+      id: 'deck-size',
+      severity: 'info',
+      title: `Il mazzo ha ${a.deckSize} carte: con più di ${min} carte peschi meno spesso quelle migliori`,
+    });
+  }
+
+  const tooMany = a.profiles.filter((p) => p.quantity > a.rules.maxCopies && !anyNumberAllowed(p));
+  if (tooMany.length > 0) {
+    warnings.push({
+      id: 'max-copies',
+      severity: 'error',
+      title: `Più di ${a.rules.maxCopies} copie di ${tooMany.length === 1 ? 'una carta' : `${tooMany.length} carte`}`,
+      cards: tooMany.map((p) => `${p.quantity} ${p.name}`),
+    });
+  }
+  return warnings;
+};
+
+/** Il comandante può esserlo? Creatura leggendaria (anche fuori dal campo) o "can be your commander" */
+const canBeCommander = (p: CardProfile) =>
+  /can be your commander/i.test(oracleOf(p)) ||
+  (/\bLegendary\b/.test(frontTypeOf(p)) &&
+    // Grist: "As long as Grist isn't on the battlefield, it's a 1/1 Insect creature in addition to its other types"
+    (/\bCreature\b/.test(frontTypeOf(p)) || /creature in addition to its other types/i.test(oracleOf(p))));
+
+const PAIRING = /\bPartner\b|Friends forever|Doctor's companion|Choose a Background/i;
+
+const commanderWarnings = (a: DeckAnalysis): Warning[] => {
+  const warnings: Warning[] = [];
+  const total = a.deckSize + a.commanders.reduce((s, c) => s + c.quantity, 0);
+
+  if (a.commanders.length === 0) {
+    warnings.push({
+      id: 'no-commander',
+      severity: 'error',
+      title: 'Nessun comandante indicato',
+      detail: "Sceglilo nella scheda Modifica: senza comandante non si può controllare l'identità di colore.",
+    });
+  }
+
+  if (total !== a.rules.deckSize) {
+    warnings.push({
+      id: 'deck-size',
+      severity: 'error',
+      title: `Il mazzo ha ${total} carte: nel Commander devono essere esattamente ${a.rules.deckSize}, comandante incluso`,
+    });
+  }
+
+  for (const c of a.commanders) {
+    if (!canBeCommander(c)) {
+      warnings.push({
+        id: `invalid-commander-${c.name}`,
+        severity: 'error',
+        title: `${c.name} non può essere un comandante`,
+        detail: 'Serve una creatura leggendaria, o una carta che dice "can be your commander".',
+        cards: [c.name],
+      });
+    }
+  }
+
+  if (a.commanders.length === 2) {
+    const [x, y] = a.commanders;
+    const background = (p: CardProfile) => /\bBackground\b/.test(frontTypeOf(p));
+    const paired =
+      (PAIRING.test(oracleOf(x)) && PAIRING.test(oracleOf(y))) ||
+      (/Choose a Background/i.test(oracleOf(x)) && background(y)) ||
+      (/Choose a Background/i.test(oracleOf(y)) && background(x));
+    if (!paired) {
+      warnings.push({
+        id: 'partners',
+        severity: 'error',
+        title: 'Due comandanti sono ammessi solo con Partner, Friends forever o Background',
+        cards: a.commanders.map((c) => c.name),
+      });
+    }
+  } else if (a.commanders.length > 2) {
+    warnings.push({ id: 'partners', severity: 'error', title: 'Al massimo due comandanti', cards: a.commanders.map((c) => c.name) });
+  }
+
+  const duplicates = a.profiles.filter((p) => p.quantity > 1 && !anyNumberAllowed(p));
+  if (duplicates.length > 0) {
+    warnings.push({
+      id: 'singleton',
+      severity: 'error',
+      title: `Il Commander è singleton: ${duplicates.length === 1 ? 'una carta ha' : `${duplicates.length} carte hanno`} più di una copia`,
+      cards: duplicates.map((p) => `${p.quantity} ${p.name}`),
+    });
+  }
+
+  if (a.commanders.length > 0) {
+    const identity = new Set<string>(a.commanderIdentity);
+    const outside = a.profiles.filter((p) => p.card.color_identity.some((c) => !identity.has(c)));
+    if (outside.length > 0) {
+      const label = a.commanderIdentity.length > 0 ? a.commanderIdentity.map((c) => COLOR_NAMES[c]).join(', ') : 'incolore';
+      warnings.push({
+        id: 'color-identity',
+        severity: 'error',
+        title: `${outside.length === 1 ? 'Una carta è' : `${outside.length} carte sono`} fuori dall'identità di colore del comandante (${label})`,
+        cards: outside.map((p) => p.name),
+      });
+    }
+  }
+
+  const banned = [...a.commanders, ...a.profiles].filter((p) => p.card.legalities?.commander === 'banned');
+  if (banned.length > 0) {
+    warnings.push({
+      id: 'banned',
+      severity: 'error',
+      title: `${banned.length === 1 ? 'Una carta è bannata' : `${banned.length} carte sono bannate`} nel Commander`,
+      cards: banned.map((p) => p.name),
+    });
+  }
+
+  return warnings;
+};
+
 export const buildWarnings = (a: DeckAnalysis): Warning[] => {
   const warnings: Warning[] = [];
 
@@ -63,18 +197,10 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
     });
   }
 
-  if (a.deckSize < 60) {
-    warnings.push({
-      id: 'deck-size',
-      severity: 'error',
-      title: `Il mazzo ha ${a.deckSize} carte: nel Constructed il minimo è 60`,
-    });
-  } else if (a.deckSize > 60) {
-    warnings.push({
-      id: 'deck-size',
-      severity: 'info',
-      title: `Il mazzo ha ${a.deckSize} carte: con più di 60 carte peschi meno spesso quelle migliori`,
-    });
+  if (a.format === 'commander') {
+    warnings.push(...commanderWarnings(a));
+  } else {
+    warnings.push(...constructedWarnings(a));
   }
 
   if (a.lands.playable === 0) {

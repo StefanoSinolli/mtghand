@@ -45,18 +45,19 @@ export default function AnalysisPage() {
         <div className="min-w-0 space-y-6">
           <LandCount analysis={analysis} />
           <Panel title="Mano iniziale">
-            <OpeningHandChart stats={analysis.openingHand} />
+            <OpeningHandChart stats={analysis.openingHand} multiplayer={analysis.rules.drawOnFirstTurn} />
           </Panel>
           <Panel title="Simulazione">
-            <SimulationPanel profiles={analysis.profiles} excludeCards={analysis.altOnly.map((c) => c.card)} />
+            <SimulationPanel analysis={analysis} />
           </Panel>
         </div>
       </div>
 
       <p className="text-xs leading-relaxed text-stone-500">
         Soglie calcolate con il modello di Frank Karsten: una carta è consistente se, avendo abbastanza terre, la
-        probabilità di avere le fonti colorate entro il suo turno è almeno (89 + costo)%. Numero di terre: regressione di
-        Karsten 19.59 + 1.90 × costo medio − 0.28 × pescate/ramp economici + 0.27 × companion. MDFC e carte con
+        probabilità di avere le fonti colorate entro il suo turno è almeno (89 + costo)%
+        {analysis.rules.drawOnFirstTurn && ', con primo mulligan gratuito e pescata al turno 1 (Commander multiplayer)'}.
+        Numero di terre: regressione di Karsten {analysis.rules.landFormulaText}. MDFC e carte con
         landcycling contano come mezza terra; le carte con riduzione di costo (Delve, Affinity, "costa {'{1}'} in meno
         per ogni…") usano un costo effettivo stimato: simboli colorati più al massimo 1 generico. Le carte con Madness
         usano il costo di Madness se il mazzo ha almeno 8 carte che fanno scartare.

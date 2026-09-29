@@ -5,6 +5,7 @@
  * - Arena: "4 Lightning Bolt (M10) 146"
  * - Header "Deck", "Sideboard", "Companion", "Commander", ecc.
  * - MTGO: main e sideboard separati da una riga vuota
+ * - Comandante: sezione "Commander", marcatore Moxfield "*CMDR*", categoria Archidekt "[Commander]"
  */
 
 import type { DeckEntry } from '../types';
@@ -12,11 +13,13 @@ import type { DeckEntry } from '../types';
 export interface ParsedDeck {
   main: DeckEntry[];
   side: DeckEntry[];
+  /** Carte indicate esplicitamente come comandante */
+  commanders: DeckEntry[];
   /** Righe che non sono state riconosciute */
   unrecognized: string[];
 }
 
-type Section = 'main' | 'side' | 'skip';
+type Section = 'main' | 'side' | 'commander' | 'skip';
 
 // Header di sezione → sezione di destinazione
 const SECTION_HEADERS: Record<string, Section> = {
@@ -29,7 +32,8 @@ const SECTION_HEADERS: Record<string, Section> = {
   side: 'side',
   sb: 'side',
   companion: 'side',
-  commander: 'skip',
+  commander: 'commander',
+  commanders: 'commander',
   maybeboard: 'skip',
   considering: 'skip',
   about: 'skip',
@@ -41,6 +45,9 @@ const QTY_FIRST = /^(\d+)\s*x?\s+(.+?)(?:\s+\(([A-Za-z0-9]{2,6})\)(?:\s+(\S+))?)
 const QTY_LAST = /^(.+?)\s+x(\d+)$/i;
 // Prefisso sideboard stile MTGO/Moxfield "SB: 2 Name"
 const SB_PREFIX = /^SB:\s*/i;
+// Marcatori a fine riga: Moxfield "*CMDR*", "*F*" (foil), Archidekt "[Commander{top}]" e "^Tag,#colore^"
+const CMDR_MARK = /\*CMDR\*/i;
+const TRAILING_TAGS = /\s*(?:\*[A-Z]+\*|\[[^\]]*\]|\^[^^]*\^)\s*/gi;
 
 const normalizeHeader = (line: string) => line.toLowerCase().replace(/[:\s]+$/, '').trim();
 
@@ -78,6 +85,7 @@ const parseCardLine = (line: string): DeckEntry | null => {
 export const parseDeckList = (text: string): ParsedDeck => {
   const main: DeckEntry[] = [];
   const side: DeckEntry[] = [];
+  const commanders: DeckEntry[] = [];
   const unrecognized: string[] = [];
 
   let section: Section = 'main';
@@ -116,6 +124,10 @@ export const parseDeckList = (text: string): ParsedDeck => {
       forceSide = true;
     }
 
+    const bracket = cardLine.match(/\[([^\]]*)\]/);
+    const forceCommander = CMDR_MARK.test(cardLine) || (bracket !== null && /commander/i.test(bracket[1]));
+    cardLine = cardLine.replace(TRAILING_TAGS, ' ').trim();
+
     const entry = parseCardLine(cardLine);
     if (!entry || entry.quantity <= 0) {
       unrecognized.push(line);
@@ -124,13 +136,56 @@ export const parseDeckList = (text: string): ParsedDeck => {
 
     if (section === 'skip') continue;
 
+    if (forceCommander || section === 'commander') {
+      addEntry(commanders, entry);
+      continue;
+    }
+
     const goesToSide =
       forceSide || section === 'side' || (!explicitSections && sawBlankAfterCards);
 
     addEntry(goesToSide ? side : main, entry);
   }
 
-  return { main, side, unrecognized };
+  return { main, side, commanders, unrecognized };
+};
+
+const BASIC_NAMES = /^(Snow-Covered )?(Plains|Island|Swamp|Mountain|Forest|Wastes)$/i;
+
+/** Tutte le carte non base in una sola copia */
+const isSingleton = (entries: DeckEntry[]) => entries.every((e) => e.quantity === 1 || BASIC_NAMES.test(e.name));
+
+export interface FormatSuggestion {
+  format: 'constructed60' | 'commander';
+  main: DeckEntry[];
+  side: DeckEntry[];
+  commanders: DeckEntry[];
+}
+
+/**
+ * Riconosce una lista Commander e separa il comandante:
+ * - comandante indicato esplicitamente (sezione, *CMDR*, [Commander])
+ * - convenzione MTGO: 99 carte + 1–2 carte dopo la riga vuota
+ * - 100 carte singleton senza comandante indicato (lo sceglie l'utente)
+ */
+export const suggestFormat = (parsed: ParsedDeck): FormatSuggestion => {
+  const { main, side, commanders } = parsed;
+  const mainCount = countCards(main);
+
+  if (commanders.length > 0) {
+    return { format: 'commander', main, side: [], commanders };
+  }
+
+  const sideCount = countCards(side);
+  if (sideCount >= 1 && sideCount <= 2 && mainCount + sideCount === 100 && isSingleton(main) && isSingleton(side)) {
+    return { format: 'commander', main, side: [], commanders: side };
+  }
+
+  if ((mainCount === 100 || mainCount === 99) && side.length === 0 && isSingleton(main)) {
+    return { format: 'commander', main, side: [], commanders: [] };
+  }
+
+  return { format: 'constructed60', main, side, commanders: [] };
 };
 
 export const countCards = (entries: DeckEntry[]) =>
@@ -140,11 +195,51 @@ export const countCards = (entries: DeckEntry[]) =>
 export const expandEntries = (entries: DeckEntry[]): string[] =>
   entries.flatMap((e) => Array.from({ length: e.quantity }, () => e.name));
 
-/** Serializza il mazzo nel formato testo standard */
-export const formatDeckList = (main: DeckEntry[], side: DeckEntry[] = []) => {
-  const lines = main.map((e) => `${e.quantity} ${e.name}`);
-  if (side.length > 0) {
-    lines.push('', 'Sideboard', ...side.map((e) => `${e.quantity} ${e.name}`));
-  }
+/** Serializza il mazzo nel formato testo standard (con sezione Commander se presente) */
+export const formatDeckList = (main: DeckEntry[], side: DeckEntry[] = [], commanders: DeckEntry[] = []) => {
+  const toLines = (entries: DeckEntry[]) => entries.map((e) => `${e.quantity} ${e.name}`);
+  const lines: string[] = [];
+  if (commanders.length > 0) lines.push('Commander', ...toLines(commanders), '', 'Deck');
+  lines.push(...toLines(main));
+  if (side.length > 0) lines.push('', 'Sideboard', ...toLines(side));
   return lines.join('\n');
 };
+
+/**
+ * Liste finali per l'import nel formato scelto.
+ * Nel Commander, se la lista non indica il comandante, `pickedCommander` lo sposta dal mazzo.
+ */
+export const buildImport = (parsed: ParsedDeck, format: 'constructed60' | 'commander', pickedCommander?: string) => {
+  if (format === 'constructed60') {
+    const main = parsed.commanders.reduce((list, c) => {
+      const copy = list.map((e) => ({ ...e }));
+      addEntry(copy, c);
+      return copy;
+    }, parsed.main);
+    return { main, side: parsed.side, commanders: [] as DeckEntry[] };
+  }
+
+  const suggestion = suggestFormat(parsed);
+  const base = suggestion.format === 'commander' ? suggestion : { main: parsed.main, commanders: parsed.commanders };
+  let main = base.main;
+  let commanders = base.commanders;
+
+  if (commanders.length === 0 && pickedCommander) {
+    const entry = main.find((e) => e.name === pickedCommander);
+    if (entry) {
+      main = main
+        .map((e) => (e === entry ? { ...e, quantity: e.quantity - 1 } : e))
+        .filter((e) => e.quantity > 0);
+      commanders = [{ name: entry.name, quantity: 1 }];
+    }
+  }
+
+  return { main, side: [] as DeckEntry[], commanders };
+};
+
+/** Carte candidate a comandante nella scelta manuale: una copia, non terre base */
+export const commanderCandidates = (entries: DeckEntry[]) =>
+  entries
+    .filter((e) => e.quantity === 1 && !BASIC_NAMES.test(e.name))
+    .map((e) => e.name)
+    .sort((a, b) => a.localeCompare(b));

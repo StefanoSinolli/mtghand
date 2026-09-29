@@ -4,7 +4,7 @@
 
 import { landWeight, type CardProfile, type FetchAbility, type LandProfile } from './cardProfile';
 import { keyColors, type ManaSymbolColor } from './manaCost';
-import { requiredSources } from './probability';
+import { CONSTRUCTED_MODEL, requiredSources, type ManaModel } from './probability';
 
 /** Colori delle terre del mazzo che un effetto di ricerca (fetch, landcycling) può trovare */
 export const fetchableColors = (fetch: FetchAbility, deck: CardProfile[], into = new Set<ManaSymbolColor>()) => {
@@ -109,9 +109,11 @@ export interface Requirement {
   pips: number;
   copies: number;
   alternative: boolean;
+  /** Magia del comandante: sempre disponibile nella zona di comando */
+  commander?: boolean;
 }
 
-export const collectRequirements = (deck: CardProfile[]): Requirement[] =>
+export const collectRequirements = (deck: CardProfile[], commander = false): Requirement[] =>
   deck.flatMap((p) =>
     p.spells.flatMap((face) =>
       [...face.pips].map(([key, pips]) => ({
@@ -123,6 +125,7 @@ export const collectRequirements = (deck: CardProfile[]): Requirement[] =>
         pips,
         copies: p.quantity,
         alternative: face.alternative,
+        ...(commander ? { commander: true } : {}),
       })),
     ),
   );
@@ -142,6 +145,7 @@ export const checkRequirements = (
   deck: CardProfile[],
   deckSize: number,
   requirements = collectRequirements(deck),
+  model: ManaModel = CONSTRUCTED_MODEL,
 ): RequirementCheck[] => {
   const lands = modelLandCount(deck);
   const sourceCache = new Map<string, SourceCount>();
@@ -154,7 +158,7 @@ export const checkRequirements = (
       sourceCache.set(cacheKey, sources);
     }
 
-    const required = requiredSources(deckSize, lands, req.turn, req.pips);
+    const required = requiredSources(deckSize, lands, req.turn, req.pips, model);
     const target = required ?? lands + 1;
     return {
       ...req,

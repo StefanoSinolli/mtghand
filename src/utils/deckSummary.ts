@@ -77,7 +77,10 @@ export const groupByType = (entries: DeckEntry[], cards: Map<string, ScryfallCar
 export interface DeckSummary {
   cover: ScryfallCard | null;
   colors: ManaColor[];
+  /** Carte del mazzo, comandante incluso */
   mainCount: number;
+  /** Comandanti trovati su Scryfall (solo Commander) */
+  commanders: ScryfallCard[];
   sideCount: number;
   lands: number;
   /** Magie per valore di mana: indice 0..6, l'ultimo è 7+ */
@@ -113,10 +116,18 @@ export const summarizeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): Dec
     if (!cover || score > cover.score) cover = { card, score };
   }
 
+  // Commander: copertina e colori vengono dal comandante
+  const commanders = (deck.format === 'commander' ? (deck.commanders ?? []) : [])
+    .map((e) => lookupCard(cards, e.name))
+    .filter((c): c is ScryfallCard => !isPlaceholder(c));
+  const identity = new Set(commanders.flatMap((c) => c.color_identity));
+
   return {
-    cover: cover?.card ?? null,
-    colors: WUBRG.filter((c) => colorSet.has(c)),
-    mainCount: deck.main.reduce((s, e) => s + e.quantity, 0),
+    cover: commanders[0] ?? cover?.card ?? null,
+    colors: WUBRG.filter((c) => (commanders.length > 0 ? identity : colorSet).has(c)),
+    mainCount:
+      deck.main.reduce((s, e) => s + e.quantity, 0) + (deck.commanders ?? []).reduce((s, e) => s + e.quantity, 0),
+    commanders,
     sideCount: deck.side.reduce((s, e) => s + e.quantity, 0),
     lands,
     curve,

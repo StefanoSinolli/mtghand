@@ -46,7 +46,8 @@ export default function ColorSources({ colors }: { colors: ColorSummary[] }) {
               </div>
             </button>
             <p className="px-4 pb-3 text-xs text-stone-400">
-              {c.ok ? 'Più esigente' : 'Critica'}: <span className="text-stone-200">{c.worst.face}</span>{' '}
+              {c.ok ? 'Più esigente' : 'Critica'}: <span className="text-stone-200">{c.worst.face}</span>
+              {c.worst.commander && <CommanderBadge />}{' '}
               <ManaCost cost={c.worst.manaCost} size="sm" /> al turno {c.worst.turn}
               {c.worst.sources.support > 0 && ` · incluse ${num(c.worst.sources.support)} fonti non-terra`}
             </p>
@@ -72,7 +73,8 @@ export default function ColorSources({ colors }: { colors: ColorSummary[] }) {
                       {c.checks.map((check) => (
                         <tr key={`${check.card}-${check.face}`} className="border-t border-white/5">
                           <td className={`px-4 py-1.5 ${check.ok ? 'text-stone-200' : 'text-red-300'}`}>
-                            {check.face} <span className="text-stone-500">×{check.copies}</span>
+                            {check.face}
+                            {check.commander ? <CommanderBadge /> : <span className="text-stone-500"> ×{check.copies}</span>}
                           </td>
                           <td className="px-2 py-1.5">
                             <ManaCost cost={check.manaCost} size="sm" />
@@ -95,5 +97,13 @@ export default function ColorSources({ colors }: { colors: ColorSummary[] }) {
         La linea bianca indica le fonti necessarie. Clicca su un colore per vedere tutte le carte.
       </p>
     </div>
+  );
+}
+
+function CommanderBadge() {
+  return (
+    <span className="ml-1.5 rounded bg-gold-400/15 px-1.5 py-px text-[10px] font-bold tracking-wide text-gold-300 uppercase">
+      Comandante
+    </span>
   );
 }

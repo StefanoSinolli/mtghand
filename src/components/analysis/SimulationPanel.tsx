@@ -1,26 +1,35 @@
-import type { CardProfile } from '../../analysis/cardProfile';
+import type { DeckAnalysis } from '../../analysis/analyze';
 import { useSimulation } from '../../hooks/useSimulation';
 import Button from '../ui/Button';
 import ManaCost from '../ui/ManaCost';
 import { pct } from './format';
 
-interface SimulationPanelProps {
-  profiles: CardProfile[];
-  /** Carte giocabili solo in modo alternativo: non ha senso misurarne il lancio in curva */
-  excludeCards: string[];
-}
-
-export default function SimulationPanel({ profiles, excludeCards }: SimulationPanelProps) {
+export default function SimulationPanel({ analysis }: { analysis: DeckAnalysis }) {
   const { result, running, run } = useSimulation();
+  const { rules } = analysis;
+  const start = () =>
+    run(analysis.profiles, {
+      // carte giocabili solo in modo alternativo: non ha senso misurarne il lancio in curva
+      excludeCards: analysis.altOnly.map((c) => c.card),
+      commanders: analysis.commanders,
+      freeFirstMulligan: rules.freeFirstMulligan,
+      onThePlay: !rules.drawOnFirstTurn,
+    });
+  // nel Commander il primo mulligan è gratuito: si tiene a 7 anche dopo un mulligan
+  const keptAtSeven = result ? result.mulligans[0] + (rules.freeFirstMulligan ? result.mulligans[1] : 0) : 0;
+  const oneMoreIndex = rules.freeFirstMulligan ? 2 : 1;
   const casts = result ? [...result.casts].sort((a, b) => a.onCurveGivenLands - b.onCurveGivenLands) : [];
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-stone-400">
-        Gioca 10.000 partite on the play con London mulligan e una terra a turno, tenendo conto delle terre che entrano
-        tappate. Le fonti non-terra non sono considerate.
+        {rules.drawOnFirstTurn
+          ? 'Gioca 10.000 partite multiplayer (pescata al turno 1, primo mulligan gratuito)'
+          : 'Gioca 10.000 partite on the play'}{' '}
+        con London mulligan e una terra a turno, tenendo conto delle terre che entrano tappate. Le fonti non-terra non
+        sono considerate.
       </p>
-      <Button variant={result ? 'secondary' : 'primary'} onClick={() => run(profiles, excludeCards)} disabled={running}>
+      <Button variant={result ? 'secondary' : 'primary'} onClick={start} disabled={running}>
         {running ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -38,8 +47,10 @@ export default function SimulationPanel({ profiles, excludeCards }: SimulationPa
           <div className="grid gap-3 sm:grid-cols-3">
             <MiniStat
               label="Mani tenute a 7"
-              value={pct(result.mulligans[0])}
-              hint={`1 mull ${pct(result.mulligans[1])} · 2+ ${pct(result.mulligans[2] + result.mulligans[3])}`}
+              value={pct(keptAtSeven)}
+              hint={`a 6 ${pct(result.mulligans[oneMoreIndex])} · a 5 o meno ${pct(
+                result.mulligans.slice(oneMoreIndex + 1).reduce((a, b) => a + b, 0),
+              )}`}
             />
             <MiniStat label="3 terre al turno 3" value={pct(result.landDrops[2])} hint={`stappate ${pct(result.untappedLandDrops[2])}`} />
             <MiniStat label="4 terre al turno 4" value={pct(result.landDrops[3])} hint={`stappate ${pct(result.untappedLandDrops[3])}`} />

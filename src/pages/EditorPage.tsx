@@ -7,7 +7,8 @@ import { saveDeck } from '../store/decks';
 import { countCards } from '../utils/deckParser';
 import { addCopies, moveEntry, removeEntry, setQuantity } from '../utils/deckEdit';
 import { groupByType, isBasicLand, TYPE_LABELS } from '../utils/deckSummary';
-import { isPlaceholder, type DeckEntry, type DisplayCard } from '../types';
+import { isPlaceholder, type DeckEntry, type DeckFormat, type DisplayCard } from '../types';
+import { FORMAT_RULES } from '../formats';
 import CardImage from '../components/cards/CardImage';
 import CardSearch from '../components/cards/CardSearch';
 import Button from '../components/ui/Button';
@@ -16,7 +17,9 @@ import Panel from '../components/ui/Panel';
 import { useConfirm } from '../components/ui/confirm';
 import type { DeckContext } from './deckContext';
 
-type Board = 'main' | 'side';
+type Board = 'main' | 'side' | 'commander';
+
+const MAX_COMMANDERS = 2;
 
 export default function EditorPage() {
   const context = useOutletContext<DeckContext | undefined>();
@@ -27,10 +30,14 @@ export default function EditorPage() {
   const [name, setName] = useState(existing?.name ?? '');
   const [main, setMain] = useState<DeckEntry[]>(existing?.main ?? []);
   const [side, setSide] = useState<DeckEntry[]>(existing?.side ?? []);
+  const [format, setFormat] = useState<DeckFormat>(existing?.format ?? 'constructed60');
+  const [commanders, setCommanders] = useState<DeckEntry[]>(existing?.commanders ?? []);
   const [target, setTarget] = useState<Board>('main');
   const [previewName, setPreviewName] = useState<string | null>(null);
+  const rules = FORMAT_RULES[format];
+  const isCommander = format === 'commander';
 
-  const names = useMemo(() => [...main, ...side].map((e) => e.name), [main, side]);
+  const names = useMemo(() => [...commanders, ...main, ...side].map((e) => e.name), [commanders, main, side]);
   const { cards, getCard } = useCards(names);
 
   // ricavata a ogni render: i dati di una carta appena aggiunta arrivano dopo
@@ -38,16 +45,38 @@ export default function EditorPage() {
 
   const mainCount = countCards(main);
   const sideCount = countCards(side);
+  const commanderCount = countCards(commanders);
   const dirty =
     name !== (existing?.name ?? '') ||
-    JSON.stringify([main, side]) !== JSON.stringify([existing?.main ?? [], existing?.side ?? []]);
+    format !== (existing?.format ?? 'constructed60') ||
+    JSON.stringify([main, side, commanders]) !==
+      JSON.stringify([existing?.main ?? [], existing?.side ?? [], existing?.commanders ?? []]);
 
   const update = (board: Board, fn: (list: DeckEntry[]) => DeckEntry[]) =>
-    board === 'main' ? setMain(fn) : setSide(fn);
+    board === 'main' ? setMain(fn) : board === 'side' ? setSide(fn) : setCommanders(fn);
 
   const handleAdd = (cardName: string) => {
+    if (target === 'commander' && commanderCount >= MAX_COMMANDERS) return;
     update(target, (list) => addCopies(list, cardName));
     setPreviewName(cardName);
+  };
+
+  const changeFormat = (next: DeckFormat) => {
+    setFormat(next);
+    setTarget('main');
+  };
+
+  /** Sposta una copia dal mazzo al comandante (o viceversa) */
+  const toCommander = (cardName: string) => {
+    if (commanderCount >= MAX_COMMANDERS) return;
+    const entry = main.find((e) => e.name === cardName);
+    if (!entry) return;
+    setMain((l) => setQuantity(l, cardName, entry.quantity - 1));
+    setCommanders((l) => addCopies(l, cardName, 1));
+  };
+  const fromCommander = (cardName: string) => {
+    setCommanders((l) => removeEntry(l, cardName));
+    setMain((l) => addCopies(l, cardName, 1));
   };
 
   const handleMove = (from: Board, cardName: string) => {
@@ -63,7 +92,9 @@ export default function EditorPage() {
 
   const handleSave = () => {
     const deckName = name.trim() || 'Nuovo mazzo';
-    const deck = existing ? { ...existing, name: deckName, main, side } : createDeck(deckName, main, side);
+    const deck = existing
+      ? { ...existing, name: deckName, format, main, side, commanders: isCommander ? commanders : undefined }
+      : createDeck(deckName, main, side, format, commanders);
     saveDeck(deck);
     navigate(`/deck/${deck.id}`);
   };
@@ -87,7 +118,22 @@ export default function EditorPage() {
           <Panel className="relative z-20">
             <div className="grid gap-4 md:grid-cols-[1fr_1.4fr]">
               <label className="block">
-                <span className="text-sm font-semibold text-stone-300">Nome</span>
+                <span className="flex items-center justify-between text-sm font-semibold text-stone-300">
+                  Nome
+                  <span className="flex rounded-lg bg-black/30 p-0.5 text-xs font-semibold">
+                    {(['constructed60', 'commander'] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => changeFormat(f)}
+                        aria-pressed={format === f}
+                        className={`cursor-pointer rounded-md px-2.5 py-1 ${format === f ? 'bg-gold-400 text-felt-950' : 'text-stone-400'}`}
+                      >
+                        {FORMAT_RULES[f].label}
+                      </button>
+                    ))}
+                  </span>
+                </span>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -99,13 +145,13 @@ export default function EditorPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-stone-300">Aggiungi carte</span>
                   <div className="flex rounded-lg bg-black/30 p-0.5 text-xs font-semibold">
-                    {(['main', 'side'] as const).map((b) => (
+                    {(isCommander ? (['commander', 'main'] as const) : (['main', 'side'] as const)).map((b) => (
                       <button
                         key={b}
                         onClick={() => setTarget(b)}
                         className={`cursor-pointer rounded-md px-2.5 py-1 ${target === b ? 'bg-gold-400 text-felt-950' : 'text-stone-400'}`}
                       >
-                        {b === 'main' ? 'Main' : 'Sideboard'}
+                        {b === 'main' ? (isCommander ? 'Mazzo' : 'Main') : b === 'side' ? 'Sideboard' : 'Comandante'}
                       </button>
                     ))}
                   </div>
@@ -117,37 +163,66 @@ export default function EditorPage() {
             </div>
           </Panel>
 
+          {isCommander && (
+            <BoardPanel
+              title="Comandante"
+              count={commanderCount}
+              target={MAX_COMMANDERS}
+              maxCopies={1}
+              entries={commanders}
+              cards={cards}
+              emptyText="Nessun comandante. Cercalo qui sopra con “Comandante” selezionato, o usa ★ su una carta del mazzo."
+              onQuantity={(n, q) => (q <= 0 ? setCommanders((l) => removeEntry(l, n)) : undefined)}
+              onRemove={(n) => setCommanders((l) => removeEntry(l, n))}
+              onMove={fromCommander}
+              moveLabel="→ Mazzo"
+              onPreview={(card) => setPreviewName(card.name)}
+            />
+          )}
           <BoardPanel
-            title="Main deck"
+            title={isCommander ? 'Mazzo' : 'Main deck'}
             count={mainCount}
-            target={60}
+            target={isCommander ? 99 : 60}
+            maxCopies={rules.maxCopies}
             entries={main}
             cards={cards}
             onQuantity={(n, q) => setMain((l) => setQuantity(l, n, q))}
             onRemove={(n) => setMain((l) => removeEntry(l, n))}
-            onMove={(n) => handleMove('main', n)}
-            moveLabel="→ Side"
+            onMove={(n) => (isCommander ? toCommander(n) : handleMove('main', n))}
+            moveLabel={isCommander ? '★ Comandante' : '→ Side'}
             onPreview={(card) => setPreviewName(card.name)}
           />
-          <BoardPanel
-            title="Sideboard"
-            count={sideCount}
-            target={15}
-            entries={side}
-            cards={cards}
-            onQuantity={(n, q) => setSide((l) => setQuantity(l, n, q))}
-            onRemove={(n) => setSide((l) => removeEntry(l, n))}
-            onMove={(n) => handleMove('side', n)}
-            moveLabel="→ Main"
-            onPreview={(card) => setPreviewName(card.name)}
-          />
+          {!isCommander && (
+            <BoardPanel
+              title="Sideboard"
+              count={sideCount}
+              target={15}
+              maxCopies={rules.maxCopies}
+              entries={side}
+              cards={cards}
+              onQuantity={(n, q) => setSide((l) => setQuantity(l, n, q))}
+              onRemove={(n) => setSide((l) => removeEntry(l, n))}
+              onMove={(n) => handleMove('side', n)}
+              moveLabel="→ Main"
+              onPreview={(card) => setPreviewName(card.name)}
+            />
+          )}
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <Panel>
             <div className="space-y-2 text-sm">
-              <Counter label="Main" value={mainCount} ok={mainCount >= 60} hint="min 60" />
-              <Counter label="Sideboard" value={sideCount} ok={sideCount <= 15} hint="max 15" />
+              {isCommander ? (
+                <>
+                  <Counter label="Totale" value={mainCount + commanderCount} ok={mainCount + commanderCount === 100} hint="esatte 100" />
+                  <Counter label="Comandante" value={commanderCount} ok={commanderCount >= 1 && commanderCount <= MAX_COMMANDERS} hint="1–2" />
+                </>
+              ) : (
+                <>
+                  <Counter label="Main" value={mainCount} ok={mainCount >= 60} hint="min 60" />
+                  <Counter label="Sideboard" value={sideCount} ok={sideCount <= 15} hint="max 15" />
+                </>
+              )}
             </div>
             <div className="mt-4 flex flex-col gap-2">
               <Button variant="primary" size="lg" onClick={handleSave} disabled={mainCount === 0}>
@@ -189,6 +264,9 @@ interface BoardPanelProps {
   title: string;
   count: number;
   target: number;
+  /** Copie massime di una carta non base (4 nel Constructed, 1 nel Commander) */
+  maxCopies: number;
+  emptyText?: string;
   entries: DeckEntry[];
   cards: Parameters<typeof groupByType>[1];
   onQuantity: (name: string, quantity: number) => void;
@@ -198,13 +276,26 @@ interface BoardPanelProps {
   onPreview: (card: DisplayCard) => void;
 }
 
-function BoardPanel({ title, count, target, entries, cards, onQuantity, onRemove, onMove, moveLabel, onPreview }: BoardPanelProps) {
+function BoardPanel({
+  title,
+  count,
+  target,
+  maxCopies,
+  emptyText = 'Nessuna carta. Cerca una carta qui sopra per aggiungerla.',
+  entries,
+  cards,
+  onQuantity,
+  onRemove,
+  onMove,
+  moveLabel,
+  onPreview,
+}: BoardPanelProps) {
   const groups = useMemo(() => groupByType(entries, cards), [entries, cards]);
 
   return (
     <Panel title={`${title} · ${count}${target === 60 ? '' : `/${target}`}`}>
       {entries.length === 0 ? (
-        <p className="text-sm text-stone-500">Nessuna carta. Cerca una carta qui sopra per aggiungerla.</p>
+        <p className="text-sm text-stone-500">{emptyText}</p>
       ) : (
         <div className="space-y-4">
           {groups.map((group) => (
@@ -214,7 +305,7 @@ function BoardPanel({ title, count, target, entries, cards, onQuantity, onRemove
               </h3>
               <ul className="divide-y divide-white/5">
                 {group.entries.map((entry) => {
-                  const tooMany = entry.quantity > 4 && !isBasicLand(entry.card);
+                  const tooMany = entry.quantity > maxCopies && !isBasicLand(entry.card);
                   const cost = isPlaceholder(entry.card)
                     ? undefined
                     : (entry.card.mana_cost ?? entry.card.card_faces?.[0]?.mana_cost);
@@ -233,7 +324,7 @@ function BoardPanel({ title, count, target, entries, cards, onQuantity, onRemove
                       </div>
                       <span className={`min-w-0 flex-1 truncate text-sm ${isPlaceholder(entry.card) ? 'text-red-300' : 'text-stone-200'}`}>
                         {entry.name}
-                        {tooMany && <span className="ml-2 text-xs text-red-300">max 4</span>}
+                        {tooMany && <span className="ml-2 text-xs text-red-300">max {maxCopies}</span>}
                       </span>
                       {cost && (
                         <span className="hidden sm:inline">

@@ -2,7 +2,8 @@
  * Analisi completa della mana base di un mazzo
  */
 
-import type { Deck, ScryfallCard } from '../types';
+import type { Deck, DeckFormat, ManaColor, ScryfallCard } from '../types';
+import { FORMAT_RULES, rulesFor, type FormatRules } from '../formats';
 import { normalizeName } from '../services/scryfall';
 import { profileCard, type CardProfile } from './cardProfile';
 import {
@@ -15,7 +16,7 @@ import {
   type RequirementCheck,
 } from './manaBase';
 import { keyColors, parseManaCost } from './manaCost';
-import { landDropProbability, openingHandLandDistribution } from './probability';
+import { landDropProbability, openingHandLandDistribution, type ManaModel } from './probability';
 import { optimizeBasics, type OptimizerProposal } from './optimizer';
 import { buildWarnings, type Warning } from './warnings';
 
@@ -72,8 +73,15 @@ export interface AltOnlyCard {
 }
 
 export interface DeckAnalysis {
+  format: DeckFormat;
+  rules: FormatRules;
+  /** Carte nel grimorio (comandante escluso) */
   deckSize: number;
   profiles: CardProfile[];
+  /** Comandante/i (fuori dal grimorio) */
+  commanders: CardProfile[];
+  /** Identità di colore del comandante (vuota se non indicato o non Commander) */
+  commanderIdentity: ManaColor[];
   missing: string[];
   lands: LandTotals;
   landCount: LandCountAdvice;
@@ -92,17 +100,18 @@ export interface DeckAnalysis {
 }
 
 /** Formula di Karsten per mazzi da 60 carte */
-export const karstenLandCount = (averageManaValue: number, cheapDrawOrRamp: number, companion: boolean) =>
-  19.59 + 1.9 * averageManaValue - 0.28 * cheapDrawOrRamp + (companion ? 0.27 : 0);
+export const karstenLandCount = FORMAT_RULES.constructed60.landFormula;
 
 export const buildProfiles = (deck: Deck, cards: Map<string, ScryfallCard>) => {
   const profiles: CardProfile[] = [];
   const sideProfiles: CardProfile[] = [];
+  const commanderProfiles: CardProfile[] = [];
   const missing: string[] = [];
 
   for (const [entries, target, side] of [
     [deck.main, profiles, false],
     [deck.side, sideProfiles, true],
+    [deck.format === 'commander' ? (deck.commanders ?? []) : [], commanderProfiles, false],
   ] as const) {
     for (const entry of entries) {
       const card = cards.get(normalizeName(entry.name));
@@ -114,7 +123,7 @@ export const buildProfiles = (deck: Deck, cards: Map<string, ScryfallCard>) => {
     }
   }
 
-  return { profiles, sideProfiles, missing };
+  return { profiles, sideProfiles, commanderProfiles, missing };
 };
 
 const landCountAdvice = (
@@ -122,6 +131,7 @@ const landCountAdvice = (
   lands: LandTotals,
   companion: boolean,
   altOnly: ReadonlySet<string>,
+  rules: FormatRules,
 ): Omit<LandCountAdvice, 'discardOutlets'> => {
   let mvSum = 0;
   let mvCount = 0;
@@ -149,7 +159,7 @@ const landCountAdvice = (
 
   return {
     current: lands.weighted,
-    recommended: karstenLandCount(averageManaValue, cheapCount, companion),
+    recommended: rules.landFormula(averageManaValue, cheapCount, companion),
     averageManaValue,
     cheapDrawOrRamp: cheap,
     hasCompanion: companion,
@@ -184,6 +194,7 @@ const summarizeColors = (checks: RequirementCheck[], profiles: CardProfile[]): C
 };
 
 const openingHandStats = (deckSize: number, playableLands: number): OpeningHandStats => {
+  // nel Commander multiplayer si pesca al turno 1: la riga "on the draw" vale per tutti
   const distribution = openingHandLandDistribution(deckSize, playableLands);
   const sum = (from: number, to: number) => distribution.slice(from, to + 1).reduce((a, b) => a + b, 0);
   return {
@@ -277,20 +288,34 @@ export const applyMadness = (profiles: CardProfile[]) => {
   return { profiles: adjusted, outlets };
 };
 
+/** Parametri del modello di mulligan per il formato */
+export const manaModelFor = (rules: FormatRules): ManaModel => ({
+  freeFirstMulligan: rules.freeFirstMulligan,
+  drawOnFirstTurn: rules.drawOnFirstTurn,
+});
+
+const WUBRG: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
+
 export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckAnalysis => {
+  const rules = rulesFor(deck.format);
+  const model = manaModelFor(rules);
   const built = buildProfiles(deck, cards);
-  const { sideProfiles, missing } = built;
+  const { sideProfiles, commanderProfiles: commanders, missing } = built;
   const { profiles, outlets: discardOutlets } = applyMadness(built.profiles);
   const deckSize = deck.main.reduce((s, e) => s + e.quantity, 0);
+  const identity = new Set(commanders.flatMap((c) => c.card.color_identity));
+  const commanderIdentity = WUBRG.filter((c) => identity.has(c));
 
   const lands = countLands(profiles);
   const hasCompanion = sideProfiles.some((p) => p.isCompanion);
   const altOnly = findAltOnlyCards(profiles);
   const excluded = new Set(altOnly.map((c) => c.card));
-  const landCount = { ...landCountAdvice(profiles, lands, hasCompanion, excluded), discardOutlets };
+  const landCount = { ...landCountAdvice(profiles, lands, hasCompanion, excluded, rules), discardOutlets };
 
-  const requirements = collectRequirements(profiles).filter((r) => !excluded.has(r.card));
-  const checks = checkRequirements(profiles, deckSize, requirements);
+  // il comandante non è nel grimorio ma va lanciato: i suoi requisiti contano come gli altri
+  const commanderRequirements = collectRequirements(commanders, true);
+  const requirements = [...commanderRequirements, ...collectRequirements(profiles).filter((r) => !excluded.has(r.card))];
+  const checks = checkRequirements(profiles, deckSize, requirements, model);
   const colors = summarizeColors(
     checks.filter((c) => !c.alternative),
     profiles,
@@ -299,13 +324,19 @@ export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckA
   const openingHand = openingHandStats(deckSize, lands.playable);
   const tapped = tappedStats(profiles);
 
-  const optimizer = optimizeBasics(profiles, deckSize, 0, excluded);
+  const optimizerOptions = { exclude: excluded, model, extraRequirements: commanderRequirements };
+  const optimizer = optimizeBasics(profiles, deckSize, optimizerOptions);
   const landDelta = Math.round(landCount.recommended - lands.weighted);
-  const optimizerWithLandCount = landDelta !== 0 ? optimizeBasics(profiles, deckSize, landDelta, excluded) : null;
+  const optimizerWithLandCount =
+    landDelta !== 0 ? optimizeBasics(profiles, deckSize, { ...optimizerOptions, landDelta }) : null;
 
   const analysis: DeckAnalysis = {
+    format: rules.id,
+    rules,
     deckSize,
     profiles,
+    commanders,
+    commanderIdentity,
     missing,
     lands,
     landCount,

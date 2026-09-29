@@ -1,6 +1,6 @@
 /**
- * Simulazione Monte Carlo dei primi turni (on the play):
- * mulligan London, una terra per turno, terre tappate e condizionali.
+ * Simulazione Monte Carlo dei primi turni (on the play; nel Commander si pesca al T1):
+ * mulligan London con la strategia di Karsten, una terra per turno, terre tappate e condizionali.
  * Misura la probabilità di poter lanciare ogni magia nel turno pari al suo costo.
  * Le fonti non-terra non sono considerate: la simulazione valuta solo le terre.
  */
@@ -9,14 +9,20 @@ import type { BasicType, CardProfile, Landcycling, TappedRule } from './cardProf
 import { landColors } from './manaBase';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 import { shuffle } from '../utils/shuffle';
+import { mulliganSteps, spellsToBottom } from '../game/mulliganStrategy';
 
 export interface SimulationOptions {
   games?: number;
   maxTurn?: number;
+  /** false = si pesca anche al primo turno (Commander multiplayer) */
   onThePlay?: boolean;
+  /** Il primo mulligan è gratuito (Commander multiplayer) */
+  freeFirstMulligan?: boolean;
   random?: () => number;
   /** Carte da non misurare (giocabili solo in modo alternativo) */
   excludeCards?: string[];
+  /** Comandanti: sempre disponibili, se ne misura il lancio in curva */
+  commanders?: CardProfile[];
 }
 
 export interface CastStat {
@@ -32,7 +38,7 @@ export interface CastStat {
 
 export interface SimulationResult {
   games: number;
-  /** Frequenza del numero di mulligan, indice = mulligan (0..3) */
+  /** Frequenza del numero di mulligan, indice = mulligan fatti (incluso quello gratuito) */
   mulligans: number[];
   /** P(almeno t terre in gioco al turno t), indice 0 = turno 1 */
   landDrops: number[];
@@ -72,7 +78,6 @@ interface FaceCheck {
   pips: ManaSymbolColor[][];
 }
 
-const MAX_MULLIGANS = 3;
 
 const entersTapped = (land: SimLand, battlefield: BattlefieldLand[]) => {
   if (land.fetchTapped) return true;
@@ -144,9 +149,6 @@ const faceChecks = (profiles: CardProfile[], maxTurn: number): FaceCheck[] =>
       })),
   );
 
-/** Terre desiderate in una mano di `size` carte */
-const idealLands = (size: number) => Math.max(2, Math.round(size * 0.43));
-
 /** Le carte con landcycling contano come terre nel decidere mulligan e fondo */
 const isLandish = (c: SimCard) => c.land !== undefined || c.cycler !== undefined;
 
@@ -161,41 +163,62 @@ const findCycleTarget = (deck: SimCard[], from: number, cycler: Landcycling) =>
       (cycler.types.length === 0 || c.land.basicTypes.some((t) => cycler.types.includes(t))),
   );
 
-const keepable = (hand: SimCard[], size: number) => {
-  const lands = hand.filter(isLandish).length;
-  if (size >= 7) return lands >= 2 && lands <= 5;
-  if (size === 6) return lands >= 2 && lands <= 4;
-  if (size === 5) return lands >= 1 && lands <= 4;
-  return true;
+/**
+ * Mette in fondo `count` carte secondo la strategia di Karsten: prima le magie più costose
+ * (quante ne dice spellsToBottom), poi le terre che producono meno colori
+ */
+const bottom = (hand: SimCard[], count: number) => {
+  const spells = hand.filter((c) => !isLandish(c)).sort((a, b) => b.manaValue - a.manaValue);
+  const lands = hand.filter(isLandish).sort((a, b) => (a.land?.colors.length ?? 0) - (b.land?.colors.length ?? 0));
+  const spellCount = spellsToBottom(spells.length, count);
+  const out = new Set([...spells.slice(0, spellCount), ...lands.slice(0, count - spellCount)]);
+  return hand.filter((c) => !out.has(c));
 };
 
-/** Sceglie le carte da mettere in fondo: terre in eccesso o magie più costose */
-const bottom = (hand: SimCard[], count: number) => {
-  const kept = [...hand];
-  const target = idealLands(hand.length - count);
-  for (let i = 0; i < count; i++) {
-    const lands = kept.filter(isLandish).length;
-    let index: number;
-    if (lands > target) {
-      index = kept.findIndex(isLandish);
-    } else {
-      index = kept.reduce(
-        (best, c, j) => (!isLandish(c) && (best === -1 || c.manaValue > kept[best].manaValue) ? j : best),
-        -1,
-      );
-      if (index === -1) index = kept.findIndex(isLandish);
+export interface MulliganOutcome<T> {
+  hand: T[];
+  /** Resto del mazzo, carte in fondo escluse */
+  library: T[];
+  mulligans: number;
+}
+
+/**
+ * Risolve il mulligan con la strategia di Karsten (vedi mulliganStrategy.ts).
+ * Le carte messe in fondo non si pescano nei primi turni: restano fuori da `library`.
+ */
+export const resolveMulligan = <T extends SimCard>(
+  cards: T[],
+  random: () => number,
+  freeFirstMulligan: boolean,
+): MulliganOutcome<T> => {
+  const steps = mulliganSteps(freeFirstMulligan);
+  for (let i = 0; ; i++) {
+    const shuffled = shuffle(cards, random);
+    const step = steps[i];
+    const hand = bottom(shuffled.slice(0, 7), 7 - step.handSize) as T[];
+    const lands = hand.filter(isLandish).length;
+    if (i === steps.length - 1 || (lands >= step.minLands && lands <= step.maxLands)) {
+      return { hand, library: shuffled.slice(7), mulligans: i };
     }
-    kept.splice(index, 1);
   }
-  return kept;
 };
 
 export const simulate = (profiles: CardProfile[], options: SimulationOptions = {}): SimulationResult => {
-  const { games = 10000, maxTurn = 6, onThePlay = true, random = Math.random, excludeCards = [] } = options;
+  const {
+    games = 10000,
+    maxTurn = 6,
+    onThePlay = true,
+    freeFirstMulligan = false,
+    random = Math.random,
+    excludeCards = [],
+    commanders = [],
+  } = options;
 
   const library = buildLibrary(profiles);
-  const checks = faceChecks(profiles, maxTurn).filter((c) => !excludeCards.includes(c.card));
-  const mulligans = new Array<number>(MAX_MULLIGANS + 1).fill(0);
+  const checks = [...faceChecks(commanders, maxTurn), ...faceChecks(profiles, maxTurn)].filter(
+    (c) => !excludeCards.includes(c.card),
+  );
+  const mulligans = new Array<number>(mulliganSteps(freeFirstMulligan).length).fill(0);
   const landDrops = new Array<number>(maxTurn).fill(0);
   const untappedDrops = new Array<number>(maxTurn).fill(0);
   const castable = new Array<number>(checks.length).fill(0);
@@ -206,21 +229,7 @@ export const simulate = (profiles: CardProfile[], options: SimulationOptions = {
   }
 
   for (let g = 0; g < games; g++) {
-    // --- Mulligan ---
-    let deck: SimCard[] = [];
-    let hand: SimCard[] = [];
-    let mulls = 0;
-    for (;;) {
-      deck = shuffle(library, random);
-      hand = deck.slice(0, 7);
-      const size = 7 - mulls;
-      if (mulls >= MAX_MULLIGANS || keepable(bottom(hand, mulls), size)) {
-        hand = bottom(hand, mulls);
-        deck = deck.slice(7);
-        break;
-      }
-      mulls++;
-    }
+    const { hand, library: deck, mulligans: mulls } = resolveMulligan(library, random, freeFirstMulligan);
     mulligans[mulls]++;
 
     // --- Turni ---

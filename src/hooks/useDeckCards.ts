@@ -55,9 +55,12 @@ export const useCards = (names: string[] | null) => {
 };
 
 /**
- * Carica i dati di tutte le carte del mazzo (main + sideboard)
+ * Carica i dati di tutte le carte del mazzo (comandanti, main e sideboard)
  */
 export const useDeckCards = (deck: Deck | null) => {
-  const names = useMemo(() => (deck ? [...deck.main, ...deck.side].map((e) => e.name) : null), [deck]);
+  const names = useMemo(
+    () => (deck ? [...(deck.commanders ?? []), ...deck.main, ...deck.side].map((e) => e.name) : null),
+    [deck],
+  );
   return useCards(names);
 };
