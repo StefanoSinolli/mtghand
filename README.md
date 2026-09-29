@@ -2,6 +2,8 @@
 
 Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per mulligan London style.
 
+**Online:** https://mtghands.vercel.app
+
 ## 🚀 Funzionalità
 
 - ✅ Importa mazzi da file .txt/.dek o copia/incolla (formati testo, Arena, MTGO)
