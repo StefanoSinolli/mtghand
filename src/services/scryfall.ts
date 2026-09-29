@@ -150,6 +150,17 @@ export const searchCardByName = async (cardName: string): Promise<ScryfallCard |
   }
 };
 
+/**
+ * Suggerimenti di nomi per la ricerca (max 20)
+ */
+export const autocompleteCardNames = async (query: string, signal?: AbortSignal): Promise<string[]> => {
+  if (query.trim().length < 2) return [];
+  const response = await fetch(`${SCRYFALL_API}/cards/autocomplete?q=${encodeURIComponent(query)}`, { signal });
+  if (!response.ok) return [];
+  const data = (await response.json()) as { data: string[] };
+  return data.data;
+};
+
 export interface FetchCardsResult {
   /** Indicizzate per nome normalizzato (vedi normalizeName) */
   cards: Map<string, ScryfallCard>;

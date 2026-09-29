@@ -6,6 +6,7 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 
 - ✅ Importa mazzi da file .txt/.dek o copia/incolla (formati testo, Arena, MTGO)
 - ✅ Visualizzazione delle carte con immagini da Scryfall
+- ✅ Mano a ventaglio animata, dettagli delle carte, scorciatoie da tastiera (M, K, N, Invio)
 - ✅ Pesca mano iniziale di 7 carte
 - ✅ Mulligan London: Mulligan/Keep, poi scelta delle carte da mettere in fondo
 - ✅ Analisi della mana base su richiesta:
@@ -15,7 +16,7 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
   - distribuzione ottimale delle terre base, applicabile al mazzo con un clic
   - simulazione Monte Carlo di 10.000 partite in un Web Worker
 - ✅ Salvataggio mazzi in LocalStorage
-- ✅ Gestione multipli mazzi
+- ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
 
 ## 📦 Installazione
 
@@ -70,37 +71,37 @@ Usa i file in `example-decks/` oppure questa decklist:
 
 ## 🏗️ Struttura Progetto
 
+Stack: React 19 + TypeScript, Vite, Tailwind CSS v4, Motion (animazioni), React Router (hash router).
+
 ```
 src/
-├── components/            # Componenti React
-│   ├── Card.tsx           # Singola carta MTG
-│   ├── Analysis.tsx       # Pannello di analisi della mana base
-│   ├── CardDetails.tsx    # Modale con i dettagli della carta
-│   ├── DeckImport.tsx     # Importazione / creazione mazzi
-│   └── Hand.tsx           # Simulatore mano iniziale
 ├── analysis/              # Analisi mana base (funzioni pure + test)
 │   ├── analyze.ts         # Orchestratore: DeckAnalysis
 │   ├── cardProfile.ts     # Classificazione carte (terre, fetch, MDFC, fonti non-terra)
 │   ├── manaBase.ts        # Fonti per colore e requisiti
-│   ├── manaCost.ts        # Parser dei costi di mana
 │   ├── optimizer.ts       # Distribuzione ottimale delle terre base
 │   ├── probability.ts     # Ipergeometrica e modello di Karsten
 │   ├── simulate.ts        # Simulazione Monte Carlo (+ simulate.worker.ts)
 │   └── warnings.ts        # Regole di warning
-├── game/
-│   └── london.ts          # Logica mano iniziale e London mulligan
-├── hooks/
-│   ├── useDeckCards.ts    # Dati Scryfall di tutto il mazzo
-│   └── useSimulation.ts   # Simulazione nel Web Worker
-├── services/
-│   ├── deckStorage.ts     # LocalStorage + migrazione formati vecchi
-│   └── scryfall.ts        # API Scryfall con cache IndexedDB
-├── utils/
-│   ├── deckParser.ts      # Parser decklist
-│   └── shuffle.ts         # Fisher-Yates
-├── types.ts               # Modello dati (Deck, DeckEntry, ScryfallCard…)
-└── App.tsx                # App principale
+├── components/
+│   ├── analysis/          # Pannelli della pagina Analisi
+│   ├── cards/             # CardImage, CardModal, HandFan, CardSearch, DeckList
+│   ├── charts/            # Curva di mana
+│   ├── layout/            # AppShell, Logo
+│   └── ui/                # Button, Panel, Modal, ConfirmDialog, ManaCost
+├── game/london.ts         # Mano iniziale e London mulligan
+├── hooks/                 # useDeckCards/useCards, useSimulation, useElementWidth
+├── pages/                 # Lista mazzi, Import, Editor, Panoramica, Mano, Analisi
+├── services/              # deckStorage (LocalStorage), scryfall (API + cache IndexedDB)
+├── store/decks.ts         # Store dei mazzi (useSyncExternalStore)
+├── utils/                 # Parser decklist, riepilogo mazzo, editing, shuffle
+├── router.tsx             # Rotte
+└── types.ts               # Modello dati
 ```
+
+Rotte: `#/` mazzi · `#/import` · `#/new` · `#/deck/:id` (panoramica) · `#/deck/:id/hand` · `#/deck/:id/analysis` · `#/deck/:id/edit`.
+
+La build (`npm run build`) usa percorsi relativi: la cartella `dist/` funziona anche servita da MAMP in una sottocartella.
 
 ## 🔮 Prossimi Sviluppi
 
@@ -108,7 +109,6 @@ src/
 - [ ] Salvataggio mazzi nel cloud
 - [ ] Statistiche mulligan
 - [ ] Supporto Capacitor per app Android/iOS
-- [ ] Visualizzazione curva mana
 - [ ] Test di goldfishing completo
 
 ## 📚 API
