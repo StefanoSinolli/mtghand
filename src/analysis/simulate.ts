@@ -15,6 +15,8 @@ export interface SimulationOptions {
   maxTurn?: number;
   onThePlay?: boolean;
   random?: () => number;
+  /** Carte da non misurare (giocabili solo in modo alternativo) */
+  excludeCards?: string[];
 }
 
 export interface CastStat {
@@ -189,10 +191,10 @@ const bottom = (hand: SimCard[], count: number) => {
 };
 
 export const simulate = (profiles: CardProfile[], options: SimulationOptions = {}): SimulationResult => {
-  const { games = 10000, maxTurn = 6, onThePlay = true, random = Math.random } = options;
+  const { games = 10000, maxTurn = 6, onThePlay = true, random = Math.random, excludeCards = [] } = options;
 
   const library = buildLibrary(profiles);
-  const checks = faceChecks(profiles, maxTurn);
+  const checks = faceChecks(profiles, maxTurn).filter((c) => !excludeCards.includes(c.card));
   const mulligans = new Array<number>(MAX_MULLIGANS + 1).fill(0);
   const landDrops = new Array<number>(maxTurn).fill(0);
   const untappedDrops = new Array<number>(maxTurn).fill(0);

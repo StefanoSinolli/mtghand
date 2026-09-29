@@ -5,7 +5,15 @@
 import type { Deck, ScryfallCard } from '../types';
 import { normalizeName } from '../services/scryfall';
 import { profileCard, type CardProfile } from './cardProfile';
-import { checkRequirements, countLands, landLikeSource, type LandTotals, type RequirementCheck } from './manaBase';
+import {
+  checkRequirements,
+  collectRequirements,
+  countLands,
+  countSources,
+  landLikeSource,
+  type LandTotals,
+  type RequirementCheck,
+} from './manaBase';
 import { keyColors } from './manaCost';
 import { landDropProbability, openingHandLandDistribution } from './probability';
 import { optimizeBasics, type OptimizerProposal } from './optimizer';
@@ -22,6 +30,8 @@ export interface LandCountAdvice {
   costReduced: Array<{ name: string; quantity: number; printed: number; effective: number }>;
   /** Carte con landcycling contate come mezza terra */
   landcyclers: Array<{ name: string; quantity: number }>;
+  /** Carte escluse dal costo medio perché non richiedono terre (Fireblast, Sneaky Snacker in mono R) */
+  excludedFromAverage: Array<{ name: string; quantity: number; reason: string }>;
 }
 
 export interface ColorSummary {
@@ -49,6 +59,16 @@ export interface TappedLandStats {
   conditional: Array<{ name: string; quantity: number }>;
 }
 
+/** Carta che non si può lanciare dalla mano (mancano i colori) ma ha un altro modo di entrare in gioco */
+export interface AltOnlyCard {
+  card: string;
+  manaCost: string;
+  /** Gruppi di colori senza nessuna fonte nel mazzo */
+  missing: string[];
+  /** Modi alternativi percorribili, es. "può tornare in gioco dal cimitero", "Madness {R}" */
+  alternatives: string[];
+}
+
 export interface DeckAnalysis {
   deckSize: number;
   profiles: CardProfile[];
@@ -58,6 +78,8 @@ export interface DeckAnalysis {
   colors: ColorSummary[];
   /** Requisiti delle facce alternative (split, avventure), mostrati a parte */
   alternativeChecks: RequirementCheck[];
+  /** Carte giocabili solo dal cimitero o con costi alternativi: escluse dai requisiti di colore */
+  altOnly: AltOnlyCard[];
   openingHand: OpeningHandStats;
   tapped: TappedLandStats;
   warnings: Warning[];
@@ -93,13 +115,27 @@ export const buildProfiles = (deck: Deck, cards: Map<string, ScryfallCard>) => {
   return { profiles, sideProfiles, missing };
 };
 
-const landCountAdvice = (profiles: CardProfile[], lands: LandTotals, companion: boolean): LandCountAdvice => {
+const landCountAdvice = (
+  profiles: CardProfile[],
+  lands: LandTotals,
+  companion: boolean,
+  altOnly: ReadonlySet<string>,
+): LandCountAdvice => {
   let mvSum = 0;
   let mvCount = 0;
   const cheap: Array<{ name: string; quantity: number }> = [];
+  const excludedFromAverage: LandCountAdvice['excludedFromAverage'] = [];
 
   for (const p of profiles) {
-    if (p.manaValue !== null) {
+    // Carte che non chiedono terre per essere giocate: non pesano sul costo medio
+    const reason = altOnly.has(p.name)
+      ? 'non si lancia dalla mano'
+      : p.manaValue !== null && p.altPlay.some((a) => a.kind === 'free' && a.fromHand)
+        ? 'costo alternativo senza mana'
+        : null;
+    if (reason) {
+      excludedFromAverage.push({ name: p.name, quantity: p.quantity, reason });
+    } else if (p.manaValue !== null) {
       mvSum += p.manaValue * p.quantity;
       mvCount += p.quantity;
     }
@@ -124,6 +160,7 @@ const landCountAdvice = (profiles: CardProfile[], lands: LandTotals, companion: 
         effective: p.spells[0].manaValue,
       })),
     landcyclers: profiles.filter((p) => p.landcycling).map((p) => ({ name: p.name, quantity: p.quantity })),
+    excludedFromAverage,
   };
 };
 
@@ -171,15 +208,44 @@ const tappedStats = (profiles: CardProfile[]): TappedLandStats => {
   return { always, conditional };
 };
 
+/**
+ * Carte il cui costo stampato richiede colori senza nessuna fonte nel mazzo, ma che hanno
+ * un modo alternativo percorribile (ritorno dal cimitero, costo alternativo senza mana,
+ * o una parola chiave con un costo che il mazzo può pagare)
+ */
+export const findAltOnlyCards = (profiles: CardProfile[]): AltOnlyCard[] => {
+  const cache = new Map<string, boolean>();
+  const hasSource = (key: string) => {
+    if (!cache.has(key)) cache.set(key, countSources(profiles, key, Infinity).total > 0);
+    return cache.get(key)!;
+  };
+
+  const result: AltOnlyCard[] = [];
+  for (const p of profiles) {
+    const faces = p.spells.filter((s) => !s.alternative);
+    const missing = [...new Set(faces.flatMap((f) => [...f.pips.keys()]))].filter((key) => !hasSource(key));
+    if (missing.length === 0) continue;
+
+    const viable = p.altPlay.filter((alt) => alt.kind !== 'cost' || [...alt.pips!.keys()].every(hasSource));
+    if (viable.length > 0) {
+      result.push({ card: p.name, manaCost: faces[0].manaCost, missing, alternatives: viable.map((a) => a.label) });
+    }
+  }
+  return result;
+};
+
 export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckAnalysis => {
   const { profiles, sideProfiles, missing } = buildProfiles(deck, cards);
   const deckSize = deck.main.reduce((s, e) => s + e.quantity, 0);
 
   const lands = countLands(profiles);
   const hasCompanion = sideProfiles.some((p) => p.isCompanion);
-  const landCount = landCountAdvice(profiles, lands, hasCompanion);
+  const altOnly = findAltOnlyCards(profiles);
+  const excluded = new Set(altOnly.map((c) => c.card));
+  const landCount = landCountAdvice(profiles, lands, hasCompanion, excluded);
 
-  const checks = checkRequirements(profiles, deckSize);
+  const requirements = collectRequirements(profiles).filter((r) => !excluded.has(r.card));
+  const checks = checkRequirements(profiles, deckSize, requirements);
   const colors = summarizeColors(
     checks.filter((c) => !c.alternative),
     profiles,
@@ -188,9 +254,9 @@ export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckA
   const openingHand = openingHandStats(deckSize, lands.playable);
   const tapped = tappedStats(profiles);
 
-  const optimizer = optimizeBasics(profiles, deckSize);
+  const optimizer = optimizeBasics(profiles, deckSize, 0, excluded);
   const landDelta = Math.round(landCount.recommended - lands.weighted);
-  const optimizerWithLandCount = landDelta !== 0 ? optimizeBasics(profiles, deckSize, landDelta) : null;
+  const optimizerWithLandCount = landDelta !== 0 ? optimizeBasics(profiles, deckSize, landDelta, excluded) : null;
 
   const analysis: DeckAnalysis = {
     deckSize,
@@ -200,6 +266,7 @@ export const analyzeDeck = (deck: Deck, cards: Map<string, ScryfallCard>): DeckA
     landCount,
     colors,
     alternativeChecks,
+    altOnly,
     openingHand,
     tapped,
     warnings: [],

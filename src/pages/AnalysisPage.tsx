@@ -48,7 +48,7 @@ export default function AnalysisPage() {
             <OpeningHandChart stats={analysis.openingHand} />
           </Panel>
           <Panel title="Simulazione">
-            <SimulationPanel profiles={analysis.profiles} />
+            <SimulationPanel profiles={analysis.profiles} excludeCards={analysis.altOnly.map((c) => c.card)} />
           </Panel>
         </div>
       </div>
@@ -212,6 +212,14 @@ function LandCount({ analysis }: { analysis: DeckAnalysis }) {
             Contate come mezza terra (landcycling):{' '}
             <span className="text-stone-300">
               {landCount.landcyclers.map((c) => `${c.quantity} ${c.name}`).join(', ')}
+            </span>
+          </li>
+        )}
+        {landCount.excludedFromAverage.length > 0 && (
+          <li>
+            Escluse dal costo medio:{' '}
+            <span className="text-stone-300">
+              {landCount.excludedFromAverage.map((c) => `${c.quantity} ${c.name} (${c.reason})`).join(', ')}
             </span>
           </li>
         )}

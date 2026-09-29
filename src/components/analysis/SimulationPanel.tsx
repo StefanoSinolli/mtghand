@@ -4,7 +4,13 @@ import Button from '../ui/Button';
 import ManaCost from '../ui/ManaCost';
 import { pct } from './format';
 
-export default function SimulationPanel({ profiles }: { profiles: CardProfile[] }) {
+interface SimulationPanelProps {
+  profiles: CardProfile[];
+  /** Carte giocabili solo in modo alternativo: non ha senso misurarne il lancio in curva */
+  excludeCards: string[];
+}
+
+export default function SimulationPanel({ profiles, excludeCards }: SimulationPanelProps) {
   const { result, running, run } = useSimulation();
   const casts = result ? [...result.casts].sort((a, b) => a.onCurveGivenLands - b.onCurveGivenLands) : [];
 
@@ -14,7 +20,7 @@ export default function SimulationPanel({ profiles }: { profiles: CardProfile[] 
         Gioca 10.000 partite on the play con London mulligan e una terra a turno, tenendo conto delle terre che entrano
         tappate. Le fonti non-terra non sono considerate.
       </p>
-      <Button variant={result ? 'secondary' : 'primary'} onClick={() => run(profiles)} disabled={running}>
+      <Button variant={result ? 'secondary' : 'primary'} onClick={() => run(profiles, excludeCards)} disabled={running}>
         {running ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

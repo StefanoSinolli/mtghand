@@ -13,7 +13,7 @@ export const useSimulation = () => {
 
   useEffect(() => () => workerRef.current?.terminate(), []);
 
-  const run = useCallback((profiles: CardProfile[], games = 10000) => {
+  const run = useCallback((profiles: CardProfile[], excludeCards: string[] = [], games = 10000) => {
     workerRef.current?.terminate();
     const worker = new Worker(new URL('../analysis/simulate.worker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
@@ -29,7 +29,7 @@ export const useSimulation = () => {
       setRunning(false);
     };
 
-    const request: SimulationRequest = { profiles, options: { games } };
+    const request: SimulationRequest = { profiles, options: { games, excludeCards } };
     worker.postMessage(request);
   }, []);
 

@@ -87,6 +87,22 @@ export interface SpellFace {
   costReduced: boolean;
 }
 
+/**
+ * Un altro modo di far arrivare la carta in gioco oltre al costo stampato:
+ * - reanimate: torna dal cimitero sul campo senza pagare mana (Sneaky Snacker, Arclight Phoenix)
+ * - cost: parola chiave con un proprio costo di mana (Madness {R}, Escape {B}{B}{R}{R}, Evoke…)
+ * - free: costo alternativo senza mana (Fireblast, Force of Will, Flashback—Sacrifica una Montagna)
+ */
+export interface AltPlay {
+  kind: 'reanimate' | 'cost' | 'free';
+  label: string;
+  /** Si usa al posto del lancio dalla mano (Fireblast, Evoke) e non dal cimitero (Flashback, Escape) */
+  fromHand: boolean;
+  manaCost?: string;
+  /** Simboli colorati del costo alternativo, per gruppo di colori */
+  pips?: Map<string, number>;
+}
+
 /** Landcycling: paghi il costo, scarti la carta e cerchi una terra (es. Islandcycling {1}) */
 export interface Landcycling extends FetchAbility {
   cost: number;
@@ -99,6 +115,8 @@ export interface CardProfile {
   land?: LandProfile;
   /** Magia con landcycling: conta come mezza terra */
   landcycling?: Landcycling;
+  /** Modi alternativi di giocare la carta */
+  altPlay: AltPlay[];
   spells: SpellFace[];
   /** Valore di mana usato per il costo medio del mazzo (null = escluso) */
   manaValue: number | null;
@@ -182,6 +200,40 @@ const buildSpellFace = (name: string, manaCost: string, alternative: boolean, or
 
 const LANDCYCLING = /\b(Plains|Island|Swamp|Mountain|Forest|Basic land|Land)cycling ((?:\{[^}]+\})+)/i;
 
+const GRAVEYARD_KEYWORDS = new Set(['Flashback', 'Escape', 'Unearth', 'Disturb', 'Embalm', 'Eternalize', 'Encore']);
+
+const ALT_KEYWORDS =
+  'Madness|Flashback|Plot|Escape|Evoke|Ninjutsu|Dash|Unearth|Blitz|Prowl|Surge|Spectacle|Disturb|Embalm|Eternalize|Encore|Emerge|Bestow|Overload|Mutate|Foretell';
+// "Madness {R}" oppure "Escape—{B}{B}{R}{R}, …" oppure "Flashback—Sacrifice a Mountain."
+const ALT_COST = new RegExp(`\\b(${ALT_KEYWORDS})(?:\\s+((?:\\{[^}]+\\})+)|\\s*—\\s*((?:\\{[^}]+\\})+|[^.(\\n]+))`, 'g');
+
+const parseAltPlay = (oracle: string): AltPlay[] => {
+  const result: AltPlay[] = [];
+
+  // Stesso paragrafo: Ichorid dice "if this card is in your graveyard, … If you do, return this card to the battlefield"
+  const reanimate = oracle
+    .split('\n')
+    .some((p) => /\breturn this card\b[^.]*\bto the battlefield\b/i.test(p) && /\bgraveyard\b/i.test(p));
+  if (reanimate) result.push({ kind: 'reanimate', label: 'può tornare in gioco dal cimitero', fromHand: false });
+
+  for (const [, keyword, cost, dashed] of oracle.matchAll(ALT_COST)) {
+    const manaCost = cost ?? (dashed?.startsWith('{') ? dashed : undefined);
+    const fromHand = !GRAVEYARD_KEYWORDS.has(keyword);
+    if (manaCost) {
+      const pips = groupPips(parseManaCost(manaCost).pips);
+      result.push({ kind: 'cost', label: `${keyword} ${manaCost}`, manaCost, pips, fromHand });
+    } else {
+      result.push({ kind: 'free', label: `${keyword} (${dashed.trim().toLowerCase()})`, fromHand });
+    }
+  }
+
+  if (/rather than pay this spell's mana cost/i.test(oracle)) {
+    result.push({ kind: 'free', label: 'costo alternativo senza mana', fromHand: true });
+  }
+
+  return result;
+};
+
 const parseLandcycling = (oracle: string): Landcycling | undefined => {
   const match = oracle.match(LANDCYCLING);
   if (!match) return undefined;
@@ -209,6 +261,7 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
     quantity,
     card,
     spells: [],
+    altPlay: [],
     manaValue: null,
     cheapDrawOrRamp: false,
     isCompanion: inSideboard && /^Companion —/m.test(front.oracle_text ?? card.oracle_text ?? ''),
@@ -236,6 +289,7 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
 
     const oracle = faces.map((f) => f.oracle_text ?? '').join('\n') || (card.oracle_text ?? '');
     profile.landcycling = profile.land ? undefined : parseLandcycling(oracle);
+    profile.altPlay = parseAltPlay(oracle);
 
     // Un landcycler si usa soprattutto come terra: la magia resta, ma come faccia alternativa
     profile.spells = castable.map((f, i) =>

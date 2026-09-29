@@ -58,6 +58,7 @@ const syntheticBasic = (name: string, color: ManaSymbolColor): CardProfile => {
     card: { id: `basic-${color}`, name, layout: 'normal', cmc: 0, type_line: `Basic Land — ${type ?? ''}`, color_identity: [] } as ScryfallCard,
     land: { produces: [color], tapped: { kind: 'never' }, basicTypes: type ? [type] : [], isBasic: true, isMdfc: false },
     spells: [],
+    altPlay: [],
     manaValue: null,
     cheapDrawOrRamp: false,
     isCompanion: false,
@@ -202,8 +203,10 @@ export const optimizeBasics = (
   deck: CardProfile[],
   deckSize: number,
   landDelta = 0,
+  /** Carte da ignorare (es. giocabili solo dal cimitero) */
+  exclude: ReadonlySet<string> = new Set(),
 ): OptimizerProposal | null => {
-  const requirements = collectRequirements(deck).filter((r) => !r.alternative);
+  const requirements = collectRequirements(deck).filter((r) => !r.alternative && !exclude.has(r.card));
   const demanded = new Set(requirements.flatMap((r) => keyColors(r.key)));
   const colors = BASIC_COLORS.filter((c) => demanded.has(c));
   if (colors.length === 0) return null;

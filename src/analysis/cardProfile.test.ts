@@ -117,3 +117,33 @@ describe('landcycling e costi ridotti', () => {
     expect(profile('Counterspell').spells[0].costReduced).toBe(false);
   });
 });
+
+describe('modi alternativi di giocare una carta', () => {
+  const labels = (name: string) => profile(name).altPlay.map((a) => [a.kind, a.label]);
+
+  it('riconosce le carte che tornano dal cimitero', () => {
+    for (const name of ['Sneaky Snacker', 'Arclight Phoenix', 'Bloodghast', 'Prized Amalgam', 'Ichorid']) {
+      expect(labels(name), name).toContainEqual(['reanimate', 'può tornare in gioco dal cimitero']);
+    }
+    // Stinkweed Imp torna in mano (dredge), Gravecrawler si lancia comunque col suo costo
+    expect(labels('Stinkweed Imp')).toEqual([]);
+    expect(labels('Gravecrawler')).toEqual([]);
+  });
+
+  it('riconosce le parole chiave con un costo alternativo', () => {
+    expect(labels('Fiery Temper')).toEqual([['cost', 'Madness {R}']]);
+    expect(labels('Faithless Looting')).toEqual([['cost', 'Flashback {2}{R}']]);
+    expect(labels('Highway Robbery')).toEqual([['cost', 'Plot {1}{R}']]);
+    expect(labels('Kroxa, Titan of Death\'s Hunger')).toEqual([['cost', 'Escape {B}{B}{R}{R}']]);
+    expect(labels('Mulldrifter')).toEqual([['cost', 'Evoke {2}{U}']]);
+    expect(labels('Ninja of the Deep Hours')).toEqual([['cost', 'Ninjutsu {1}{U}']]);
+    expect(profile('Kroxa, Titan of Death\'s Hunger').altPlay[0].pips).toEqual(new Map([['B', 2], ['R', 2]]));
+  });
+
+  it('riconosce i costi alternativi senza mana', () => {
+    expect(labels('Fireblast')).toEqual([['free', 'costo alternativo senza mana']]);
+    expect(labels('Force of Will')).toEqual([['free', 'costo alternativo senza mana']]);
+    expect(labels('Lava Dart')).toEqual([['free', 'Flashback (sacrifice a mountain)']]);
+    expect(labels('Lightning Bolt')).toEqual([]);
+  });
+});

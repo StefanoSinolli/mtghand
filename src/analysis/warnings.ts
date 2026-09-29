@@ -104,6 +104,16 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
     });
   }
 
+  for (const alt of a.altOnly) {
+    warnings.push({
+      id: `alt-only-${alt.card}`,
+      severity: 'info',
+      title: `${alt.card} (${alt.manaCost}): non puoi lanciarla dalla mano`,
+      detail: `Nessuna fonte di ${alt.missing.map(colorLabel).join(' e ')}, ma può entrare in gioco comunque: ${alt.alternatives.join('; ')}.`,
+      cards: [alt.card],
+    });
+  }
+
   for (const color of a.colors) {
     if (color.ok) continue;
     const failing = color.checks.filter((c) => !c.ok);
@@ -156,6 +166,8 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
       detail: [
         `Formula di Karsten con costo medio ${averageManaValue.toFixed(2)} e ${a.landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0)} pescate/ramp economici.`,
         (a.lands.landcyclers > 0 || a.lands.mdfc > 0) && 'Le fonti extra (landcycling e MDFC) contano come mezza terra.',
+        a.landCount.excludedFromAverage.length > 0 &&
+          `Escluse dal costo medio: ${a.landCount.excludedFromAverage.map((c) => c.name).join(', ')}.`,
         a.landCount.costReduced.length > 0 &&
           `Costo effettivo stimato per ${a.landCount.costReduced.map((c) => `${c.name} (${c.printed}→${c.effective})`).join(', ')}.`,
       ]

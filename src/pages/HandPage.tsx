@@ -103,7 +103,7 @@ export default function HandPage() {
         <Stat label="Mulligan" value={game.mulligans} />
         <Stat label="Mano" value={game.phase === 'kept' ? game.hand.length : handSize} />
         <Stat label="Terre" value={lands.length} />
-        <Stat label="Biblioteca" value={game.library.length} />
+        <Stat label="Grimorio" value={game.library.length} />
         {colorKey && (
           <span className="glass flex h-9 items-center gap-2 rounded-full px-3">
             <span className="text-stone-400">Colori</span>

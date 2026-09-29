@@ -196,3 +196,57 @@ describe('Mono U Terror (Pauper)', () => {
     expect(a.optimizer!.changes).toEqual([]);
   });
 });
+
+describe('carte giocabili solo in modo alternativo', () => {
+  const MONO_RED = `3 Faithless Looting
+4 Fiery Temper
+3 Fireblast
+4 Grab the Prize
+3 Guttersnipe
+4 Highway Robbery
+4 Kessig Flamebreather
+4 Lava Dart
+4 Lightning Bolt
+18 Mountain
+1 Sazacap's Brew
+4 Sneaky Snacker
+4 Voldaren Epicure`;
+
+  it('Sneaky Snacker in mono rosso: avviso informativo, nessun errore di colore', () => {
+    const a = analyze(MONO_RED);
+    expect(a.altOnly).toEqual([
+      { card: 'Sneaky Snacker', manaCost: '{U}{B}', missing: ['U', 'B'], alternatives: ['può tornare in gioco dal cimitero'] },
+    ]);
+    const info = a.warnings.find((w) => w.id === 'alt-only-Sneaky Snacker')!;
+    expect(info.severity).toBe('info');
+    expect(info.title).toBe('Sneaky Snacker ({U}{B}): non puoi lanciarla dalla mano');
+    expect(a.warnings.filter((w) => w.severity === 'error')).toEqual([]);
+    expect(a.colors.map((c) => c.key)).toEqual(['R']);
+    // l'optimizer non propone Isole o Paludi
+    expect(a.optimizer!.changes).toEqual([]);
+  });
+
+  it('esclude dal costo medio le carte che non chiedono terre', () => {
+    const a = analyze(MONO_RED);
+    expect(a.landCount.excludedFromAverage).toEqual([
+      { name: 'Fireblast', quantity: 3, reason: 'costo alternativo senza mana' },
+      { name: 'Sneaky Snacker', quantity: 4, reason: 'non si lancia dalla mano' },
+    ]);
+    // Lava Dart ha un flashback senza mana, ma dal cimitero: resta nel costo medio
+    expect(a.landCount.excludedFromAverage.map((c) => c.name)).not.toContain('Lava Dart');
+    expect(a.landCount.averageManaValue).toBeCloseTo(62.2 / 35, 1);
+  });
+
+  it('senza alternative percorribili resta l\'errore', () => {
+    // Kroxa ha Escape, ma serve comunque il nero
+    const a = analyze(`4 Kroxa, Titan of Death's Hunger\n36 Lightning Bolt\n20 Mountain`);
+    expect(a.altOnly).toEqual([]);
+    expect(a.warnings.find((w) => w.id === 'color-B')).toMatchObject({ severity: 'error' });
+  });
+
+  it('una carta con qualche fonte del suo colore resta un requisito normale', () => {
+    const a = analyze(`4 Sneaky Snacker\n36 Lightning Bolt\n2 Island\n2 Swamp\n16 Mountain`);
+    expect(a.altOnly).toEqual([]);
+    expect(a.colors.map((c) => c.key).sort()).toEqual(['B', 'R', 'U']);
+  });
+});
