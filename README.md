@@ -136,7 +136,7 @@ I link di condivisione usano l'indirizzo da cui è aperta l'app: condividili dal
 - [ ] Integrazione Firebase per profili utente
 - [ ] Salvataggio mazzi nel cloud
 - [ ] Supporto Capacitor per app Android/iOS
-- [ ] Test di goldfishing completo
+- [ ] Prova di gioco più completa (segnalini, punti vita, danni)
 
 ## 📚 API
 
