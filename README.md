@@ -8,6 +8,9 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 - ✅ Visualizzazione delle carte con immagini da Scryfall
 - ✅ Mano a ventaglio animata, dettagli delle carte, scorciatoie da tastiera (M, K, N, Invio)
 - ✅ Pesca mano iniziale di 7 carte
+- ✅ Prova di gioco dopo il keep ("Gioca i turni"): pescata, una terra per turno, magie pagate con
+  mana e colori delle terre e delle fonti in gioco (Sol Ring, Signet, creature), zona di comando,
+  cimitero, registro e annulla
 - ✅ Mulligan London: Mulligan/Keep, poi scelta delle carte da mettere in fondo
 - ✅ Analisi della mana base su richiesta:
   - fonti per colore rispetto alle soglie di Frank Karsten (fetch, dual, MDFC, Signet e dork inclusi)
@@ -99,6 +102,8 @@ src/
 ├── formats.ts             # Regole dei formati (Constructed, Commander)
 ├── game/london.ts         # Mano iniziale e London mulligan (anche gratuito)
 ├── game/mulliganStrategy.ts # Strategia di mulligan di Karsten
+├── game/mana.ts           # Pagamento del mana, terre che entrano tappate
+├── game/playtest.ts       # Prova di gioco (turni, terre, magie, annulla)
 ├── hooks/                 # useDeckCards/useCards, useSimulation, useElementWidth
 ├── pages/                 # Lista mazzi, Import, Editor, Panoramica, Mano, Analisi
 ├── services/              # deckStorage (LocalStorage), scryfall (API + cache IndexedDB)

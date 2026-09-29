@@ -10,6 +10,7 @@ import { landColors } from './manaBase';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 import { shuffle } from '../utils/shuffle';
 import { mulliganSteps, spellsToBottom } from '../game/mulliganStrategy';
+import { canPayPips, landEntersTapped } from '../game/mana';
 
 export interface SimulationOptions {
   games?: number;
@@ -79,43 +80,15 @@ interface FaceCheck {
 }
 
 
-const entersTapped = (land: SimLand, battlefield: BattlefieldLand[]) => {
-  if (land.fetchTapped) return true;
-  const rule = land.tapped;
-  switch (rule.kind) {
-    case 'never':
-    case 'shock': // si paga la vita
-    case 'conditional': // ipotesi ottimistica
-      return false;
-    case 'always':
-      return true;
-    case 'fast':
-      return battlefield.length > 2;
-    case 'slow':
-      return battlefield.length >= 2;
-    case 'check':
-      return !battlefield.some((l) => l.basicTypes.some((t) => rule.types.includes(t)));
-  }
-};
+const entersTapped = (land: SimLand, battlefield: BattlefieldLand[]) =>
+  landEntersTapped(land.tapped, land.fetchTapped, battlefield);
 
-/** Verifica se i simboli colorati possono essere pagati con terre distinte (matching bipartito) */
-const canPay = (pips: ManaSymbolColor[][], lands: BattlefieldLand[]) => {
-  const owner = new Array<number>(lands.length).fill(-1);
-
-  const assign = (pip: number, seen: boolean[]): boolean => {
-    for (let l = 0; l < lands.length; l++) {
-      if (seen[l] || !pips[pip].some((c) => lands[l].colors.includes(c))) continue;
-      seen[l] = true;
-      if (owner[l] === -1 || assign(owner[l], seen)) {
-        owner[l] = pip;
-        return true;
-      }
-    }
-    return false;
-  };
-
-  return pips.every((_, pip) => assign(pip, new Array<boolean>(lands.length).fill(false)));
-};
+/** Verifica se i simboli colorati possono essere pagati con terre distinte */
+const canPay = (pips: ManaSymbolColor[][], lands: BattlefieldLand[]) =>
+  canPayPips(
+    pips,
+    lands.map((l, i) => ({ id: String(i), colors: l.colors, amount: 1 })),
+  );
 
 const buildLibrary = (profiles: CardProfile[]): SimCard[] => {
   const cards: SimCard[] = [];

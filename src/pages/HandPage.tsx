@@ -18,6 +18,9 @@ import {
 import { primaryType } from '../utils/deckSummary';
 import { rulesFor } from '../formats';
 import CardImage from '../components/cards/CardImage';
+import PlaytestBoard from '../components/playtest/PlaytestBoard';
+import { buildProfiles } from '../analysis/analyze';
+import { buildCardInfo, startPlaytest, type PlayCardInfo, type PlaytestState } from '../game/playtest';
 import { isPlaceholder, type DisplayCard, type ManaColor } from '../types';
 import { useDeckContext } from './deckContext';
 
@@ -32,12 +35,36 @@ function Kbd({ children }: { children: string }) {
 }
 
 export default function HandPage() {
-  const { deck, getCard, loading, error } = useDeckContext();
+  const { deck, cards, getCard, loading, error } = useDeckContext();
   const rules = rulesFor(deck.format);
   const gameOptions = useMemo(() => ({ freeFirstMulligan: rules.freeFirstMulligan }), [rules.freeFirstMulligan]);
   const [game, setGame] = useState<HandState>(() => newGame(deck.main, gameOptions));
   const [dealKey, setDealKey] = useState(0);
   const [details, setDetails] = useState<DisplayCard | null>(null);
+  const [playtest, setPlaytest] = useState<PlaytestState | null>(null);
+
+  // Informazioni di gioco (terre, costi, mana prodotto) per la prova di gioco
+  const infoOf = useMemo(() => {
+    const { profiles, commanderProfiles } = buildProfiles(deck, cards);
+    const infos = new Map<string, PlayCardInfo>();
+    for (const p of [...profiles, ...commanderProfiles]) {
+      const info = buildCardInfo(p, profiles);
+      // stessa chiave usata dalle istanze di carta: il nome scritto nella lista
+      for (const e of [...deck.main, ...(deck.commanders ?? [])]) {
+        if (getCard(e.name) === p.card) infos.set(e.name, info);
+      }
+    }
+    return (name: string) => infos.get(name);
+  }, [deck, cards, getCard]);
+
+  const startPlaying = useCallback(() => {
+    setPlaytest(
+      startPlaytest(game.hand, game.library, {
+        drawOnFirstTurn: rules.drawOnFirstTurn,
+        commanders: (deck.commanders ?? []).map((c, i) => ({ uid: `cmd-${i}`, name: c.name })),
+      }),
+    );
+  }, [game, rules.drawOnFirstTurn, deck.commanders]);
 
   const doMulligan = useCallback(() => {
     if (!canMulligan(game)) return;
@@ -49,17 +76,20 @@ export default function HandPage() {
   const doConfirm = useCallback(() => setGame((g) => confirmBottom(g)), []);
   const doNewHand = useCallback(() => {
     setGame(newGame(deck.main, gameOptions));
+    setPlaytest(null);
     setDealKey((k) => k + 1);
   }, [deck.main, gameOptions]);
 
   // Scorciatoie da tastiera
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (details || e.metaKey || e.ctrlKey || e.target instanceof HTMLInputElement) return;
+      // durante la prova di gioco le scorciatoie le gestisce il tavolo
+      if (playtest || details || e.metaKey || e.ctrlKey || e.target instanceof HTMLInputElement) return;
       const key = e.key.toLowerCase();
       if (key === 'm' && game.phase === 'deciding') doMulligan();
       else if (key === 'k' && game.phase === 'deciding') doKeep();
       else if (key === 'n') doNewHand();
+      else if (key === 'g' && game.phase === 'kept') startPlaying();
       else if (key === 'enter' && game.phase === 'bottoming') {
         // evita che Invio attivi anche il click sulla carta che ha il focus
         e.preventDefault();
@@ -68,7 +98,7 @@ export default function HandPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [game, details, doMulligan, doKeep, doNewHand, doConfirm]);
+  }, [game, details, playtest, doMulligan, doKeep, doNewHand, doConfirm, startPlaying]);
 
   const handCards = useMemo(
     () => game.hand.map((c) => ({ uid: c.uid, card: getCard(c.name) })),
@@ -98,6 +128,12 @@ export default function HandPage() {
 
   if (loading && handCards.every((c) => isPlaceholder(c.card))) {
     return <p className="animate-pulse py-24 text-center text-stone-400">Mescolo il mazzo…</p>;
+  }
+
+  if (playtest) {
+    return (
+      <PlaytestBoard state={playtest} onChange={setPlaytest} onNewHand={doNewHand} getCard={getCard} infoOf={infoOf} />
+    );
   }
 
   return (
@@ -200,10 +236,16 @@ export default function HandPage() {
           </Button>
         )}
         {game.phase === 'kept' && (
-          <Button size="lg" variant="primary" onClick={doNewHand}>
-            Nuova mano
-            <Kbd>N</Kbd>
-          </Button>
+          <>
+            <Button size="lg" onClick={doNewHand}>
+              Nuova mano
+              <Kbd>N</Kbd>
+            </Button>
+            <Button size="lg" variant="primary" onClick={startPlaying}>
+              Gioca i turni
+              <Kbd>G</Kbd>
+            </Button>
+          </>
         )}
       </div>
 
