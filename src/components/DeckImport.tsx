@@ -1,22 +1,36 @@
-import { useState, useEffect } from 'react';
-import { parseDeckList, getDeckStats } from '../utils/deckParser';
+import { useState, useEffect, type ChangeEvent } from 'react';
+import { countCards, parseDeckList } from '../utils/deckParser';
 import { searchCardByName } from '../services/scryfall';
+import { createDeck } from '../services/deckStorage';
+import type { Deck, DeckEntry, ScryfallCard } from '../types';
 import './DeckImport.css';
 
-export default function DeckImport({ onDeckImported }) {
+interface DeckImportProps {
+  onDeckImported: (deck: Deck) => void;
+}
+
+const addToList = (list: DeckEntry[], name: string, quantity: number): DeckEntry[] => {
+  const existing = list.find((e) => e.name === name);
+  if (existing) {
+    return list.map((e) => (e === existing ? { ...e, quantity: e.quantity + quantity } : e));
+  }
+  return [...list, { name, quantity }];
+};
+
+export default function DeckImport({ onDeckImported }: DeckImportProps) {
   // Import tab
   const [deckName, setDeckName] = useState('');
   const [deckText, setDeckText] = useState('');
   const [error, setError] = useState('');
-  
+
   // Build tab
-  const [activeTab, setActiveTab] = useState('import'); // 'import' or 'build'
+  const [activeTab, setActiveTab] = useState<'import' | 'build'>('import');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<ScryfallCard[]>([]);
   const [searching, setSearching] = useState(false);
   const [buildDeckName, setBuildDeckName] = useState('');
-  const [buildDeck, setBuildDeck] = useState({ mainDeck: [], sideboard: [] });
-  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [buildDeck, setBuildDeck] = useState<{ main: DeckEntry[]; side: DeckEntry[] }>({ main: [], side: [] });
+  const [selectedQuantity, setSelectedQuantity] = useState('1');
   const [addToSideboard, setAddToSideboard] = useState(false);
   const [searchError, setSearchError] = useState('');
 
@@ -30,34 +44,25 @@ export default function DeckImport({ onDeckImported }) {
     const timer = setTimeout(async () => {
       setSearching(true);
       setSearchError('');
-      try {
-        const result = await searchCardByName(searchQuery);
-        if (result) {
-          setSearchResults([result]);
-        } else {
-          setSearchError('Carta non trovata');
-          setSearchResults([]);
-        }
-      } catch (err) {
-        setSearchError('Errore nella ricerca');
-        console.error(err);
-      } finally {
-        setSearching(false);
+      const result = await searchCardByName(searchQuery);
+      if (result) {
+        setSearchResults([result]);
+      } else {
+        setSearchError('Carta non trovata');
+        setSearchResults([]);
       }
+      setSearching(false);
     }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery, activeTab]);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setDeckText(event.target?.result || '');
-    };
-    reader.readAsText(file);
+    file.text().then(setDeckText);
+    if (!deckName.trim()) setDeckName(file.name.replace(/\.(txt|dek|dec)$/i, ''));
   };
 
   const handleImport = () => {
@@ -71,81 +76,58 @@ export default function DeckImport({ onDeckImported }) {
       return;
     }
 
-    try {
-      const parsed = parseDeckList(deckText);
-      
-      if (parsed.mainDeck.length === 0) {
-        setError('Nessuna carta trovata nel main deck. Verifica il formato della decklist');
+    const parsed = parseDeckList(deckText);
+
+    if (parsed.main.length === 0) {
+      setError('Nessuna carta trovata nel main deck. Verifica il formato della decklist');
+      return;
+    }
+
+    if (parsed.unrecognized.length > 0) {
+      const lines = parsed.unrecognized.map((l) => `• ${l}`).join('\n');
+      if (!confirm(`Queste righe non sono state riconosciute e verranno ignorate:\n${lines}\n\nContinuare?`)) {
         return;
       }
-
-      const stats = getDeckStats(parsed.mainDeck, parsed.sideboard);
-
-      const deck = {
-        id: Date.now().toString(),
-        name: deckName,
-        mainDeck: parsed.mainDeck,
-        sideboard: parsed.sideboard,
-        stats,
-        createdAt: new Date().toISOString()
-      };
-
-      onDeckImported(deck);
-      
-      // Reset form
-      setDeckName('');
-      setDeckText('');
-      setError('');
-    } catch (err) {
-      setError('Errore durante l\'importazione del mazzo');
-      console.error(err);
     }
+
+    onDeckImported(createDeck(deckName.trim(), parsed.main, parsed.side));
+
+    // Reset form
+    setDeckName('');
+    setDeckText('');
+    setError('');
   };
 
-  const handleAddCard = (card) => {
-    const quantity = parseInt(selectedQuantity) || 1;
-    
+  const handleAddCard = (card: ScryfallCard) => {
+    const quantity = parseInt(selectedQuantity, 10) || 1;
+
     if (quantity < 1 || quantity > 4) {
       alert('Quantità deve essere tra 1 e 4');
       return;
     }
 
-    const cardEntry = {
-      name: card.name,
-      quantity: quantity
-    };
-
-    if (addToSideboard) {
-      setBuildDeck(prev => ({
-        ...prev,
-        sideboard: [...prev.sideboard, cardEntry]
-      }));
-    } else {
-      setBuildDeck(prev => ({
-        ...prev,
-        mainDeck: [...prev.mainDeck, cardEntry]
-      }));
-    }
+    setBuildDeck((prev) =>
+      addToSideboard
+        ? { ...prev, side: addToList(prev.side, card.name, quantity) }
+        : { ...prev, main: addToList(prev.main, card.name, quantity) },
+    );
 
     // Reset search
     setSearchQuery('');
     setSearchResults([]);
-    setSelectedQuantity(1);
+    setSelectedQuantity('1');
   };
 
-  const handleRemoveCard = (index, isDeck) => {
-    if (isDeck) {
-      setBuildDeck(prev => ({
-        ...prev,
-        mainDeck: prev.mainDeck.filter((_, i) => i !== index)
-      }));
-    } else {
-      setBuildDeck(prev => ({
-        ...prev,
-        sideboard: prev.sideboard.filter((_, i) => i !== index)
-      }));
-    }
+  const handleRemoveCard = (index: number, isMain: boolean) => {
+    setBuildDeck((prev) =>
+      isMain
+        ? { ...prev, main: prev.main.filter((_, i) => i !== index) }
+        : { ...prev, side: prev.side.filter((_, i) => i !== index) },
+    );
   };
+
+  const mainDeckCount = countCards(buildDeck.main);
+  const sideboardCount = countCards(buildDeck.side);
 
   const handleSaveBuildDeck = () => {
     if (!buildDeckName.trim()) {
@@ -153,16 +135,13 @@ export default function DeckImport({ onDeckImported }) {
       return;
     }
 
-    const mainDeckCount = buildDeck.mainDeck.reduce((sum, card) => sum + card.quantity, 0);
-    const sideboardCount = buildDeck.sideboard.reduce((sum, card) => sum + card.quantity, 0);
-
     if (mainDeckCount === 0) {
       alert('Il main deck deve contenere almeno una carta');
       return;
     }
 
-    if (mainDeckCount !== 60) {
-      if (!confirm(`Il main deck ha ${mainDeckCount} carte (dovrebbe avere 60). Continuare comunque?`)) {
+    if (mainDeckCount < 60) {
+      if (!confirm(`Il main deck ha ${mainDeckCount} carte (minimo 60). Continuare comunque?`)) {
         return;
       }
     }
@@ -172,29 +151,13 @@ export default function DeckImport({ onDeckImported }) {
       return;
     }
 
-    const deck = {
-      id: Date.now().toString(),
-      name: buildDeckName,
-      mainDeck: buildDeck.mainDeck,
-      sideboard: buildDeck.sideboard,
-      stats: {
-        totalCards: mainDeckCount + sideboardCount,
-        mainDeckCards: mainDeckCount,
-        sideboardCards: sideboardCount
-      },
-      createdAt: new Date().toISOString()
-    };
+    onDeckImported(createDeck(buildDeckName.trim(), buildDeck.main, buildDeck.side));
 
-    onDeckImported(deck);
-    
     // Reset
     setBuildDeckName('');
-    setBuildDeck({ mainDeck: [], sideboard: [] });
+    setBuildDeck({ main: [], side: [] });
     setActiveTab('import');
   };
-
-  const mainDeckCount = buildDeck.mainDeck.reduce((sum, card) => sum + card.quantity, 0);
-  const sideboardCount = buildDeck.sideboard.reduce((sum, card) => sum + card.quantity, 0);
 
   return (
     <div className="deck-import">
@@ -231,11 +194,11 @@ export default function DeckImport({ onDeckImported }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="deckFile">Carica da file .txt</label>
+            <label htmlFor="deckFile">Carica da file (.txt, .dek)</label>
             <input
               type="file"
               id="deckFile"
-              accept=".txt"
+              accept=".txt,.dek,.dec"
               onChange={handleFileUpload}
             />
           </div>
@@ -243,7 +206,7 @@ export default function DeckImport({ onDeckImported }) {
           <div className="form-group">
             <label htmlFor="deckText">
               Oppure incolla la decklist
-              <span className="hint">Formato: "4 Lightning Bolt". Separa main deck e sideboard con "Sideboard"</span>
+              <span className="hint">Formati supportati: "4 Lightning Bolt", Arena/MTGO. Separa main e sideboard con "Sideboard" o una riga vuota</span>
             </label>
             <textarea
               id="deckText"
@@ -351,10 +314,10 @@ export default function DeckImport({ onDeckImported }) {
               <div className="preview-section">
                 <div className="section-title">Main Deck ({mainDeckCount})</div>
                 <div className="cards-list">
-                  {buildDeck.mainDeck.length === 0 ? (
+                  {buildDeck.main.length === 0 ? (
                     <div className="empty">Nessuna carta</div>
                   ) : (
-                    buildDeck.mainDeck.map((card, idx) => (
+                    buildDeck.main.map((card, idx) => (
                       <div key={idx} className="deck-card-item">
                         <span className="card-qty">{card.quantity}x</span>
                         <span className="card-name">{card.name}</span>
@@ -373,10 +336,10 @@ export default function DeckImport({ onDeckImported }) {
               <div className="preview-section">
                 <div className="section-title">Sideboard ({sideboardCount})</div>
                 <div className="cards-list">
-                  {buildDeck.sideboard.length === 0 ? (
+                  {buildDeck.side.length === 0 ? (
                     <div className="empty">Nessuna carta</div>
                   ) : (
-                    buildDeck.sideboard.map((card, idx) => (
+                    buildDeck.side.map((card, idx) => (
                       <div key={idx} className="deck-card-item">
                         <span className="card-qty">{card.quantity}x</span>
                         <span className="card-name">{card.name}</span>

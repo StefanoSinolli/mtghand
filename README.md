@@ -4,10 +4,10 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 
 ## 🚀 Funzionalità
 
-- ✅ Importa mazzi da file .txt o copia/incolla
+- ✅ Importa mazzi da file .txt/.dek o copia/incolla (formati testo, Arena, MTGO)
 - ✅ Visualizzazione delle carte con immagini da Scryfall
 - ✅ Pesca mano iniziale di 7 carte
-- ✅ Mulligan (London Mulligan rule)
+- ✅ Mulligan London: Mulligan/Keep, poi scelta delle carte da mettere in fondo
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi
 
@@ -24,6 +24,12 @@ npm run dev
 ```
 
 Apri http://localhost:5173 nel browser.
+
+```bash
+npm test           # test (Vitest)
+npm run typecheck  # TypeScript
+npm run lint       # oxlint
+```
 
 ## 📝 Formato Decklist
 
@@ -60,17 +66,23 @@ Usa il file `example-deck.txt` oppure questa decklist:
 
 ```
 src/
-├── components/         # Componenti React
-│   ├── Card.jsx       # Singola carta MTG
-│   ├── DeckImport.jsx # Importazione mazzi
-│   └── Hand.jsx       # Visualizzazione mano
-├── services/          # Servizi
-│   ├── deckStorage.js # LocalStorage (futuro: Firebase)
-│   └── scryfall.js    # API Scryfall
-├── utils/            # Utility
-│   ├── deckParser.js # Parser decklist
-│   └── shuffle.js    # Shuffle e mulligan logic
-└── App.jsx           # App principale
+├── components/            # Componenti React
+│   ├── Card.tsx           # Singola carta MTG
+│   ├── CardDetails.tsx    # Modale con i dettagli della carta
+│   ├── DeckImport.tsx     # Importazione / creazione mazzi
+│   └── Hand.tsx           # Simulatore mano iniziale
+├── game/
+│   └── london.ts          # Logica mano iniziale e London mulligan
+├── hooks/
+│   └── useDeckCards.ts    # Dati Scryfall di tutto il mazzo
+├── services/
+│   ├── deckStorage.ts     # LocalStorage + migrazione formati vecchi
+│   └── scryfall.ts        # API Scryfall con cache IndexedDB
+├── utils/
+│   ├── deckParser.ts      # Parser decklist
+│   └── shuffle.ts         # Fisher-Yates
+├── types.ts               # Modello dati (Deck, DeckEntry, ScryfallCard…)
+└── App.tsx                # App principale
 ```
 
 ## 🔮 Prossimi Sviluppi

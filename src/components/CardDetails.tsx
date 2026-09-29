@@ -1,14 +1,44 @@
 import { useState, useEffect } from 'react';
 import { getCardImage } from '../services/scryfall';
+import { isPlaceholder, type DisplayCard } from '../types';
 import './CardDetails.css';
 
-export default function CardDetails({ card, onClose }) {
+interface CardDetailsProps {
+  card: DisplayCard;
+  onClose: () => void;
+}
+
+export default function CardDetails({ card, onClose }: CardDetailsProps) {
   const [isFullscreenImage, setIsFullscreenImage] = useState(false);
 
-  if (!card) return null;
+  // Gestisci ESC key per chiudere fullscreen
+  useEffect(() => {
+    if (!isFullscreenImage) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreenImage(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreenImage]);
+
+  if (isPlaceholder(card)) {
+    return (
+      <div className="card-details-overlay" onClick={onClose}>
+        <div className="card-details-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="close-btn" onClick={onClose}>✕</button>
+          <div className="card-details-info">
+            <h2>{card.name}</h2>
+            <p>Carta non trovata su Scryfall.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const imageUrl = getCardImage(card, 'large');
-  const imageUrlArtwork = card.image_uris?.art_crop || card.image_uris?.large || imageUrl;
+  const imageUrlArtwork = getCardImage(card, 'art_crop') ?? imageUrl ?? undefined;
   const manaCost = card.mana_cost || '';
   const type = card.type_line || '';
   const oracleText = card.oracle_text || 'No description available';
@@ -16,19 +46,6 @@ export default function CardDetails({ card, onClose }) {
   const toughness = card.toughness;
   const legalities = card.legalities || {};
 
-  // Gestisci ESC key per chiudere fullscreen
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isFullscreenImage) {
-        setIsFullscreenImage(false);
-      }
-    };
-
-    if (isFullscreenImage) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isFullscreenImage]);
 
   // Formati di interesse
   const formats = [
@@ -41,7 +58,7 @@ export default function CardDetails({ card, onClose }) {
     { name: 'Vintage', key: 'vintage' }
   ];
 
-  const getLegalityColor = (status) => {
+  const getLegalityColor = (status: string) => {
     switch (status) {
       case 'legal':
         return '#10B981';
@@ -63,7 +80,7 @@ export default function CardDetails({ card, onClose }) {
           <div className="card-details-image">
             {imageUrl ? (
               <img 
-                src={imageUrl} 
+                src={imageUrl}
                 alt={card.name}
                 onClick={() => setIsFullscreenImage(true)}
                 style={{ cursor: 'pointer' }}

@@ -1,15 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, type MouseEvent } from 'react';
 import { getCardImage } from '../services/scryfall';
+import type { DisplayCard } from '../types';
 import './Card.css';
 
-export default function Card({ card, onClick, selected }) {
+interface CardProps {
+  card: DisplayCard;
+  onClick?: () => void;
+  selected?: boolean;
+}
+
+export default function Card({ card, onClick, selected = false }: CardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
-  const cardRef = useRef(null);
-  const imageUrl = card ? getCardImage(card, 'normal') : null;
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageUrl = getCardImage(card, 'normal');
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
 
     const rect = cardRef.current.getBoundingClientRect();

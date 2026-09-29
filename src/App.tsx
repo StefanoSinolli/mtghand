@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import DeckImport from './components/DeckImport';
 import Hand from './components/Hand';
-import { saveDeck, getDecks, deleteDeck } from './services/deckStorage';
-import { parseDeckList, getDeckStats } from './utils/deckParser';
+import { saveDeck, getDecks, deleteDeck, createDeck } from './services/deckStorage';
+import { countCards, parseDeckList } from './utils/deckParser';
+import type { Deck } from './types';
 import './App.css';
 
 // Mazzo di test di default
@@ -28,9 +29,9 @@ Sideboard
 3 Path to Exile`;
 
 function App() {
-  const [view, setView] = useState('decks'); // 'decks' | 'import' | 'hand'
-  const [decks, setDecks] = useState([]);
-  const [currentDeck, setCurrentDeck] = useState(null);
+  const [view, setView] = useState<'decks' | 'import' | 'hand'>('decks');
+  const [decks, setDecks] = useState<Deck[]>([]);
+  const [currentDeck, setCurrentDeck] = useState<Deck | null>(null);
 
   useEffect(() => {
     loadDecks();
@@ -42,18 +43,12 @@ function App() {
     // Se non ci sono mazzi, carica il mazzo di test di default
     if (savedDecks.length === 0) {
       const parsed = parseDeckList(DEFAULT_TEST_DECK);
-      const stats = getDeckStats(parsed.mainDeck, parsed.sideboard);
-      
-      const testDeck = {
+      const testDeck: Deck = {
+        ...createDeck('🧪 Mono Red Burn (Test)', parsed.main, parsed.side),
         id: 'test-deck',
-        name: '🧪 Mono Red Burn (Test)',
-        mainDeck: parsed.mainDeck,
-        sideboard: parsed.sideboard,
-        stats,
-        createdAt: new Date().toISOString(),
-        isTestDeck: true
+        isTestDeck: true,
       };
-      
+
       saveDeck(testDeck);
       savedDecks = [testDeck];
     }
@@ -61,18 +56,18 @@ function App() {
     setDecks(savedDecks);
   };
 
-  const handleDeckImported = (deck) => {
+  const handleDeckImported = (deck: Deck) => {
     saveDeck(deck);
     loadDecks();
     setView('decks');
   };
 
-  const handleStartGame = (deck) => {
+  const handleStartGame = (deck: Deck) => {
     setCurrentDeck(deck);
     setView('hand');
   };
 
-  const handleDeleteDeck = (deckId) => {
+  const handleDeleteDeck = (deckId: string) => {
     if (confirm('Sei sicuro di voler eliminare questo mazzo?')) {
       deleteDeck(deckId);
       loadDecks();
@@ -118,9 +113,9 @@ function App() {
                   <div key={deck.id} className="deck-card">
                     <h3>{deck.name}</h3>
                     <div className="deck-stats">
-                      <span>Main: {deck.stats.mainDeckCards} carte</span>
-                      {deck.stats.sideboardCards > 0 && (
-                        <span>Side: {deck.stats.sideboardCards}</span>
+                      <span>Main: {countCards(deck.main)} carte</span>
+                      {deck.side.length > 0 && (
+                        <span>Side: {countCards(deck.side)}</span>
                       )}
                     </div>
                     <div className="deck-actions">
@@ -149,12 +144,12 @@ function App() {
         )}
 
         {view === 'hand' && currentDeck && (
-          <Hand deck={currentDeck} />
+          <Hand key={currentDeck.id} deck={currentDeck} />
         )}
       </main>
 
       <footer className="app-footer">
-        <p>Dati delle carte forniti da <a href="https://scryfall.com" target="_blank">Scryfall</a></p>
+        <p>Dati delle carte forniti da <a href="https://scryfall.com" target="_blank" rel="noreferrer">Scryfall</a></p>
       </footer>
     </div>
   );
