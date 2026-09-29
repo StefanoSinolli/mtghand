@@ -14,6 +14,7 @@ const TABS = [
   { to: 'hand', label: 'Mano' },
   { to: 'analysis', label: 'Analisi' },
   { to: 'stats', label: 'Statistiche' },
+  { to: 'odds', label: 'Probabilità' },
   { to: 'edit', label: 'Modifica', editable: true },
 ];
 
@@ -87,7 +88,8 @@ export default function DeckView({ deck, actions, editable = true, badge }: Deck
             </div>
           </div>
 
-          <nav className="-mx-1 flex gap-1 overflow-x-auto">
+          {/* su mobile le schede scorrono: la sfumatura a destra lo suggerisce */}
+          <nav className="-mx-1 flex gap-1 overflow-x-auto [mask-image:linear-gradient(to_right,black_80%,transparent)] md:[mask-image:none]">
             {TABS.filter((tab) => editable || !tab.editable).map((tab) => (
               <NavLink
                 key={tab.to}

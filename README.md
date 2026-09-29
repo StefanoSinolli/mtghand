@@ -28,6 +28,8 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 - ✅ Statistiche sui mulligan: regola di keep modificabile (terre per 7/6/5 carte, colori, magie
   economiche), simulazione di 10.000 mani con i motivi dei mulligan e storico delle tue decisioni
   confrontate con la regola
+- ✅ Calcolatore di probabilità: fino a 3 condizioni (carte, terre, tipi, fonti di un colore, costo),
+  calcolo esatto con l'ipergeometrica multivariata o simulazione con il mulligan, grafico turno per turno
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
 
@@ -116,7 +118,7 @@ src/
 └── types.ts               # Modello dati
 ```
 
-Rotte: `#/` mazzi · `#/import` · `#/new` · `#/deck/:id` (panoramica) · `#/deck/:id/hand` · `#/deck/:id/analysis` · `#/deck/:id/edit`.
+Rotte: `#/` mazzi · `#/import` · `#/new` · `#/deck/:id` (panoramica) · `…/hand` · `…/analysis` · `…/stats` · `…/odds` · `…/edit` · `#/s/:link` (mazzo condiviso).
 
 La build (`npm run build`) usa percorsi relativi: la cartella `dist/` funziona anche servita da MAMP in una sottocartella.
 
@@ -133,7 +135,6 @@ I link di condivisione usano l'indirizzo da cui è aperta l'app: condividili dal
 
 - [ ] Integrazione Firebase per profili utente
 - [ ] Salvataggio mazzi nel cloud
-- [ ] Statistiche mulligan
 - [ ] Supporto Capacitor per app Android/iOS
 - [ ] Test di goldfishing completo
 

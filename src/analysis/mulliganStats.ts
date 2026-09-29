@@ -123,6 +123,41 @@ export interface MulliganStatsOptions {
 
 const HAND_SIZES = [7, 6, 5, 4];
 
+const mulliganSequence = (freeFirstMulligan: boolean) => [
+  ...(freeFirstMulligan ? [{ size: 7, free: true }] : []),
+  ...HAND_SIZES.map((size) => ({ size, free: false })),
+];
+
+export interface KeptHand<T extends SimCard> {
+  hand: T[];
+  /** Resto del mazzo, carte in fondo escluse (non si pescano nei primi turni) */
+  library: T[];
+  mulligans: number;
+  handSize: number;
+  /** Motivi dei mulligan fatti prima di tenere */
+  reasons: MulliganReason[];
+}
+
+/** Risolve i mulligan con la regola di keep data e restituisce la mano tenuta */
+export const drawKeptHand = <T extends SimCard>(
+  library: T[],
+  rule: KeepRule,
+  { freeFirstMulligan = false, deckColors = [], random = Math.random }: MulliganStatsOptions = {},
+): KeptHand<T> => {
+  const steps = mulliganSequence(freeFirstMulligan);
+  const reasons: MulliganReason[] = [];
+  for (let i = 0; ; i++) {
+    const step = steps[i];
+    const shuffled = shuffle(library, random);
+    const hand = bottom(shuffled.slice(0, 7), 7 - step.size);
+    const verdict = evaluateHand(summarizeHand(hand), step.size, rule, deckColors, step.free);
+    if (verdict.keep || i === steps.length - 1) {
+      return { hand, library: shuffled.slice(7), mulligans: i, handSize: step.size, reasons };
+    }
+    reasons.push(verdict.reason!);
+  }
+};
+
 export const simulateMulligans = (
   library: SimCard[],
   rule: KeepRule,
@@ -136,25 +171,15 @@ export const simulateMulligans = (
   let turnOne = 0;
   let turnTwo = 0;
 
-  // sequenza delle mani: il primo 7 gratuito (Commander), poi 7, 6, 5 e 4 carte
-  const steps = [...(freeFirstMulligan ? [{ size: 7, free: true }] : []), ...HAND_SIZES.map((size) => ({ size, free: false }))];
-
   for (let g = 0; g < games; g++) {
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const hand = bottom(shuffle(library, random).slice(0, 7), 7 - step.size);
-      const verdict = evaluateHand(summarizeHand(hand), step.size, rule, deckColors, step.free);
-      if (verdict.keep || i === steps.length - 1) {
-        sizeCounts.set(step.size, (sizeCounts.get(step.size) ?? 0) + 1);
-        sizeTotal += step.size;
-        mulliganTotal += i;
-        lands[Math.min(7, hand.filter(isLandish).length)]++;
-        if (hasPlay(hand, 1)) turnOne++;
-        if (hasPlay(hand, 2)) turnTwo++;
-        break;
-      }
-      reasonCounts.set(verdict.reason!, (reasonCounts.get(verdict.reason!) ?? 0) + 1);
-    }
+    const kept = drawKeptHand(library, rule, { freeFirstMulligan, deckColors, random });
+    sizeCounts.set(kept.handSize, (sizeCounts.get(kept.handSize) ?? 0) + 1);
+    sizeTotal += kept.handSize;
+    mulliganTotal += kept.mulligans;
+    lands[Math.min(7, kept.hand.filter(isLandish).length)]++;
+    if (hasPlay(kept.hand, 1)) turnOne++;
+    if (hasPlay(kept.hand, 2)) turnTwo++;
+    for (const reason of kept.reasons) reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1);
   }
 
   const mulligans = [...reasonCounts.values()].reduce((a, b) => a + b, 0);
