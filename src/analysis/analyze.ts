@@ -240,9 +240,27 @@ export const findAltOnlyCards = (profiles: CardProfile[]): AltOnlyCard[] => {
     const missing = [...new Set(faces.flatMap((f) => [...f.pips.keys()]))].filter((key) => !hasSource(key));
     if (missing.length === 0) continue;
 
-    const viable = p.altPlay.filter((alt) => alt.kind !== 'cost' || [...alt.pips!.keys()].every(hasSource));
+    const viable = p.altPlay
+      .filter((alt) => alt.kind !== 'cost' || [...alt.pips!.keys()].every(hasSource))
+      .map((a) => a.label);
+
+    // Magie del mazzo che la possono rianimare, rispettandone le restrizioni, e che si possono lanciare
+    const typeLine = p.card.card_faces?.[0]?.type_line ?? p.card.type_line;
+    if (/\bCreature\b/.test(typeLine)) {
+      const legendary = /\bLegendary\b/.test(typeLine);
+      const reanimators = profiles.filter(
+        (q) =>
+          q !== p &&
+          q.reanimates !== undefined &&
+          !(q.reanimates.nonlegendaryOnly && legendary) &&
+          (q.reanimates.maxManaValue === null || p.card.cmc <= q.reanimates.maxManaValue) &&
+          q.spells.some((face) => [...face.pips.keys()].every(hasSource)),
+      );
+      if (reanimators.length > 0) viable.push(`può essere rianimata con ${reanimators.map((q) => q.name).join(', ')}`);
+    }
+
     if (viable.length > 0) {
-      result.push({ card: p.name, manaCost: faces[0].manaCost, missing, alternatives: viable.map((a) => a.label) });
+      result.push({ card: p.name, manaCost: faces[0].manaCost, missing, alternatives: viable });
     }
   }
   return result;

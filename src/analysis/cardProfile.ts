@@ -105,6 +105,14 @@ export interface AltPlay {
   pips?: Map<string, number>;
 }
 
+/** Restrizioni di una magia di reanimazione sulla creatura che può riportare */
+export interface Reanimation {
+  /** Solo creature non leggendarie (Persist) */
+  nonlegendaryOnly: boolean;
+  /** Solo creature con costo fino a N (Unearth: 3) */
+  maxManaValue: number | null;
+}
+
 /** Landcycling: paghi il costo, scarti la carta e cerchi una terra (es. Islandcycling {1}) */
 export interface Landcycling extends FetchAbility {
   cost: number;
@@ -121,6 +129,8 @@ export interface CardProfile {
   altPlay: AltPlay[];
   /** Ti fa scartare carte (Faithless Looting, Grab the Prize, Blood token…): abilita il Madness */
   discardOutlet: boolean;
+  /** Rimette sul campo una creatura dal cimitero (Reanimate, Graveyard Shift, Animate Dead…) */
+  reanimates?: Reanimation;
   spells: SpellFace[];
   /** Valore di mana usato per il costo medio del mazzo (null = escluso) */
   manaValue: number | null;
@@ -249,6 +259,23 @@ const parseAltPlay = (oracle: string): AltPlay[] => {
   return result;
 };
 
+// "Return target creature card from your graveyard to the battlefield", "Put target creature card from a
+// graveyard onto the battlefield", "Each player puts a creature card from their graveyard onto the battlefield"
+const REANIMATE =
+  /\b(?:return|put)s? (?:(?:up to \w+|a|an|one|target) )*(nonlegendary )?creature cards?(?: with mana value (\d+) or less)? from (?:your|a|their) graveyards? (?:to|onto) the battlefield/i;
+
+const parseReanimation = (oracle: string): Reanimation | undefined => {
+  const match = oracle.match(REANIMATE);
+  if (match) {
+    return { nonlegendaryOnly: match[1] !== undefined, maxManaValue: match[2] ? parseInt(match[2], 10) : null };
+  }
+  // Animate Dead: "Enchant creature card in a graveyard … Return enchanted creature card to the battlefield"
+  if (/enchant creature card in a graveyard/i.test(oracle) && /return enchanted creature card to the battlefield/i.test(oracle)) {
+    return { nonlegendaryOnly: false, maxManaValue: null };
+  }
+  return undefined;
+};
+
 const parseLandcycling = (oracle: string): Landcycling | undefined => {
   const match = oracle.match(LANDCYCLING);
   if (!match) return undefined;
@@ -307,6 +334,7 @@ export const profileCard = (card: ScryfallCard, quantity: number, inSideboard = 
     profile.landcycling = profile.land ? undefined : parseLandcycling(oracle);
     profile.altPlay = parseAltPlay(oracle);
     profile.discardOutlet = isDiscardOutlet(oracle);
+    profile.reanimates = parseReanimation(oracle);
 
     // Un landcycler si usa soprattutto come terra: la magia resta, ma come faccia alternativa
     profile.spells = castable.map((f, i) =>

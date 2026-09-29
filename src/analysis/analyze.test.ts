@@ -267,3 +267,51 @@ describe('carte giocabili solo in modo alternativo', () => {
     expect(a.colors.map((c) => c.key).sort()).toEqual(['B', 'R', 'U']);
   });
 });
+
+describe('creature da rianimare', () => {
+  const ATRAXA = `4 Sheoldred's Restoration
+4 Atraxa, Grand Unifier
+4 Fable of the Mirror-Breaker
+4 Go for the Throat
+4 Scrapwork Mutt
+4 Evangel of Synthesis
+4 Bloodtithe Harvester
+4 Tainted Indulgence
+3 Tyrranax Rex
+2 Graveyard Shift
+4 Xander's Lounge
+4 Shipwreck Marsh
+4 Haunted Ridge
+1 Swamp
+3 Darkslick Shores
+2 Blackcleave Cliffs
+2 Sulfurous Springs
+2 Underground River
+1 Stormcarved Coast`;
+
+  it('Atraxa e Tyrranax Rex senza fonti ma rianimabili: avviso informativo, nessun errore', () => {
+    const a = analyze(ATRAXA);
+    expect(a.altOnly.map((c) => [c.card, c.alternatives])).toEqual([
+      ['Atraxa, Grand Unifier', ["può essere rianimata con Sheoldred's Restoration, Graveyard Shift"]],
+      ['Tyrranax Rex', ["può essere rianimata con Sheoldred's Restoration, Graveyard Shift"]],
+    ]);
+    expect(a.warnings.filter((w) => w.severity === 'error')).toEqual([]);
+    expect(a.colors.map((c) => c.key).sort()).toEqual(['B', 'R', 'U']);
+    // non si lanciano mai: fuori dal costo medio
+    expect(a.landCount.excludedFromAverage.map((c) => c.name)).toEqual(['Atraxa, Grand Unifier', 'Tyrranax Rex']);
+  });
+
+  it('rispetta le restrizioni: Persist non rianima creature leggendarie, Unearth solo costo ≤ 3', () => {
+    const base = `4 Atraxa, Grand Unifier\n32 Go for the Throat\n24 Swamp`;
+    expect(analyze(`${base}\n4 Persist`).altOnly).toEqual([]);
+    expect(analyze(`${base}\n4 Unearth`).altOnly).toEqual([]);
+    expect(analyze(`${base}\n4 Reanimate`).altOnly.map((c) => c.card)).toEqual(['Atraxa, Grand Unifier']);
+  });
+
+  it('la magia che rianima deve essere lanciabile', () => {
+    // Reanimate è nero, ma il mazzo ha solo Montagne: Atraxa resta un errore
+    const a = analyze(`4 Atraxa, Grand Unifier\n4 Reanimate\n28 Lightning Bolt\n24 Mountain`);
+    expect(a.altOnly).toEqual([]);
+    expect(a.warnings.some((w) => w.severity === 'error' && w.cards?.includes('Atraxa, Grand Unifier'))).toBe(true);
+  });
+});

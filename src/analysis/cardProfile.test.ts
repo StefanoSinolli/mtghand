@@ -161,3 +161,20 @@ describe('modi per scartare', () => {
     }
   });
 });
+
+describe('reanimazione', () => {
+  it('riconosce le magie che rianimano e le loro restrizioni', () => {
+    const any = { nonlegendaryOnly: false, maxManaValue: null };
+    for (const name of ['Graveyard Shift', "Sheoldred's Restoration", 'Reanimate', 'Animate Dead', 'Exhume', 'Necromancy', 'Life // Death', 'Priest of Fell Rites']) {
+      expect(profile(name).reanimates, name).toEqual(any);
+    }
+    expect(profile('Persist').reanimates).toEqual({ nonlegendaryOnly: true, maxManaValue: null });
+    expect(profile('Unearth').reanimates).toEqual({ nonlegendaryOnly: false, maxManaValue: 3 });
+  });
+
+  it('non confonde il ritorno della carta stessa o in mano', () => {
+    for (const name of ['Scrapwork Mutt', 'Arclight Phoenix', 'Stinkweed Imp', 'Go for the Throat', 'Stitcher\'s Supplier']) {
+      expect(profile(name).reanimates, name).toBeUndefined();
+    }
+  });
+});

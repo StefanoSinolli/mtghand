@@ -2253,5 +2253,451 @@
   "legalities": {
    "commander": "legal"
   }
+ },
+ {
+  "id": "ed719f25-1aab-4a1e-8c9f-dd574db5de0c",
+  "name": "Sheoldred's Restoration",
+  "layout": "normal",
+  "mana_cost": "{3}{B}",
+  "cmc": 4.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Kicker {2}{W} (You may pay an additional {2}{W} as you cast this spell.)\nReturn target creature card from your graveyard to the battlefield. If this spell was kicked, you gain life equal to that card's mana value. Otherwise, you lose that much life.\nExile Sheoldred's Restoration.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B",
+   "W"
+  ]
+ },
+ {
+  "id": "4a1f905f-1d55-4d02-9d24-e58070793d3f",
+  "name": "Atraxa, Grand Unifier",
+  "layout": "normal",
+  "mana_cost": "{3}{G}{W}{U}{B}",
+  "cmc": 7.0,
+  "type_line": "Legendary Creature — Phyrexian Angel",
+  "oracle_text": "Flying, vigilance, deathtouch, lifelink\nWhen Atraxa enters, reveal the top ten cards of your library. For each card type, you may put a card of that type from among the revealed cards into your hand. Put the rest on the bottom of your library in a random order. (Artifact, battle, creature, enchantment, instant, land, planeswalker, and sorcery are card types.)",
+  "colors": [
+   "B",
+   "G",
+   "U",
+   "W"
+  ],
+  "color_identity": [
+   "B",
+   "G",
+   "U",
+   "W"
+  ]
+ },
+ {
+  "id": "5446e1ba-c745-45b2-ad05-b22abf04daec",
+  "name": "Go for the Throat",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Destroy target nonartifact creature.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "4742800a-4872-4c2d-b884-01e0ba16950c",
+  "name": "Scrapwork Mutt",
+  "layout": "normal",
+  "mana_cost": "{2}",
+  "cmc": 2.0,
+  "type_line": "Artifact Creature — Dog",
+  "oracle_text": "When this creature enters, you may discard a card. If you do, draw a card.\nUnearth {1}{R} ({1}{R}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)",
+  "colors": [],
+  "color_identity": [
+   "R"
+  ]
+ },
+ {
+  "id": "e8b60003-a987-49b0-a0f8-bb825c97da4d",
+  "name": "Evangel of Synthesis",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Phyrexian Human Cleric",
+  "oracle_text": "When this creature enters, draw a card, then discard a card.\nAs long as you've drawn two or more cards this turn, this creature gets +1/+0 and has menace.",
+  "colors": [
+   "B",
+   "U"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ]
+ },
+ {
+  "id": "ae4aec0d-c853-44e6-9f51-cbecf413ea14",
+  "name": "Bloodtithe Harvester",
+  "layout": "normal",
+  "mana_cost": "{B}{R}",
+  "cmc": 2.0,
+  "type_line": "Creature — Vampire",
+  "oracle_text": "When this creature enters, create a Blood token. (It's an artifact with \"{1}, {T}, Discard a card, Sacrifice this token: Draw a card.\")\n{T}, Sacrifice this creature: Target creature gets -X/-X until end of turn, where X is twice the number of Blood tokens you control. Activate only as a sorcery.",
+  "colors": [
+   "B",
+   "R"
+  ],
+  "color_identity": [
+   "B",
+   "R"
+  ]
+ },
+ {
+  "id": "347d883c-84ab-4547-813b-f4385366fbce",
+  "name": "Tainted Indulgence",
+  "layout": "normal",
+  "mana_cost": "{U}{B}",
+  "cmc": 2.0,
+  "type_line": "Instant",
+  "oracle_text": "Draw two cards. Then discard a card unless there are five or more mana values among cards in your graveyard.",
+  "colors": [
+   "B",
+   "U"
+  ],
+  "color_identity": [
+   "B",
+   "U"
+  ]
+ },
+ {
+  "id": "0fb52b44-da5f-4f7a-a6c2-7924b855e051",
+  "name": "Tyrranax Rex",
+  "layout": "normal",
+  "mana_cost": "{4}{G}{G}{G}",
+  "cmc": 7.0,
+  "type_line": "Creature — Phyrexian Dinosaur",
+  "oracle_text": "This spell can't be countered.\nTrample, ward {4}, haste\nToxic 4 (Players dealt combat damage by this creature also get four poison counters.)",
+  "colors": [
+   "G"
+  ],
+  "color_identity": [
+   "G"
+  ]
+ },
+ {
+  "id": "394d7fb3-44ee-409f-a992-27e5aabd9c2b",
+  "name": "Graveyard Shift",
+  "layout": "normal",
+  "mana_cost": "{4}{B}",
+  "cmc": 5.0,
+  "type_line": "Sorcery",
+  "oracle_text": "This spell has flash as long as there are five or more mana values among cards in your graveyard.\nReturn target creature card from your graveyard to the battlefield.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "54f449ff-4025-465e-9ec5-a5cf42c4c9d3",
+  "name": "Xander's Lounge",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land — Island Swamp Mountain",
+  "oracle_text": "({T}: Add {U}, {B}, or {R}.)\nThis land enters tapped.\nCycling {3} ({3}, Discard this card: Draw a card.)",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "B",
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "9e944c5b-68ac-4a30-bbd4-09a4288319ce",
+  "name": "Shipwreck Marsh",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or more other lands.\n{T}: Add {U} or {B}.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "produced_mana": [
+   "B",
+   "U"
+  ]
+ },
+ {
+  "id": "a4e4966b-8963-4fac-a8bf-e778e063c7dd",
+  "name": "Haunted Ridge",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or more other lands.\n{T}: Add {B} or {R}.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "R"
+  ],
+  "produced_mana": [
+   "B",
+   "R"
+  ]
+ },
+ {
+  "id": "c49305d1-ac95-43ea-b02d-c3c7205bcda6",
+  "name": "Darkslick Shores",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {U} or {B}.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "produced_mana": [
+   "B",
+   "U"
+  ]
+ },
+ {
+  "id": "f75715ce-744f-409c-aeb1-e66eb9186a74",
+  "name": "Blackcleave Cliffs",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or fewer other lands.\n{T}: Add {B} or {R}.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "R"
+  ],
+  "produced_mana": [
+   "B",
+   "R"
+  ]
+ },
+ {
+  "id": "be340a1c-f1e7-446e-ae91-86ecb884479c",
+  "name": "Sulfurous Springs",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {B} or {R}. This land deals 1 damage to you.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "R"
+  ],
+  "produced_mana": [
+   "B",
+   "C",
+   "R"
+  ]
+ },
+ {
+  "id": "e8b05f37-815f-4854-bf82-ca544ca67532",
+  "name": "Underground River",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {B}. This land deals 1 damage to you.",
+  "colors": [],
+  "color_identity": [
+   "B",
+   "U"
+  ],
+  "produced_mana": [
+   "B",
+   "C",
+   "U"
+  ]
+ },
+ {
+  "id": "bd3ae4fa-4c97-410a-8c0a-bd203342595d",
+  "name": "Stormcarved Coast",
+  "layout": "normal",
+  "mana_cost": "",
+  "cmc": 0.0,
+  "type_line": "Land",
+  "oracle_text": "This land enters tapped unless you control two or more other lands.\n{T}: Add {U} or {R}.",
+  "colors": [],
+  "color_identity": [
+   "R",
+   "U"
+  ],
+  "produced_mana": [
+   "R",
+   "U"
+  ]
+ },
+ {
+  "id": "368b6903-5fc4-43e7-bd44-46b8107c8bb4",
+  "name": "Reanimate",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "cc0c2bab-4392-4e7b-9d14-2901f4ffbae8",
+  "name": "Animate Dead",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Enchantment — Aura",
+  "oracle_text": "Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, it loses \"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with this Aura.\" Return enchanted creature card to the battlefield under your control and attach this Aura to it. When this Aura leaves the battlefield, that creature's controller sacrifices it.\nEnchanted creature gets -1/-0.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "b7a56356-91bf-42f5-ab21-af2c48e78fc3",
+  "name": "Persist",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Return target nonlegendary creature card from your graveyard to the battlefield with a -1/-1 counter on it.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "5f1cdcba-a04a-4a2f-8bc1-0dd7fa03754d",
+  "name": "Exhume",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Each player puts a creature card from their graveyard onto the battlefield.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "3dd34a1a-e76b-46ee-be8d-5f7f4a092648",
+  "name": "Necromancy",
+  "layout": "normal",
+  "mana_cost": "{2}{B}",
+  "cmc": 3.0,
+  "type_line": "Enchantment",
+  "oracle_text": "You may cast this spell as though it had flash. If you cast it any time a sorcery couldn't have been cast, the controller of the permanent it becomes sacrifices it at the beginning of the next cleanup step.\nWhen this enchantment enters, if it's on the battlefield, it becomes an Aura with \"enchant creature put onto the battlefield with Necromancy.\" Put target creature card from a graveyard onto the battlefield under your control and attach this enchantment to it. When this enchantment leaves the battlefield, that creature's controller sacrifices it.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "e16d52ca-f8de-4852-9bff-9d208e5f678f",
+  "name": "Life // Death",
+  "layout": "split",
+  "mana_cost": "{G} // {1}{B}",
+  "cmc": 3.0,
+  "type_line": "Sorcery // Sorcery",
+  "colors": [
+   "B",
+   "G"
+  ],
+  "color_identity": [
+   "B",
+   "G"
+  ],
+  "card_faces": [
+   {
+    "name": "Life",
+    "mana_cost": "{G}",
+    "type_line": "Sorcery",
+    "oracle_text": "All lands you control become 1/1 creatures until end of turn. They're still lands."
+   },
+   {
+    "name": "Death",
+    "mana_cost": "{1}{B}",
+    "type_line": "Sorcery",
+    "oracle_text": "Return target creature card from your graveyard to the battlefield. You lose life equal to its mana value."
+   }
+  ]
+ },
+ {
+  "id": "d116329d-6de7-402c-821d-e9aeba9ad2b1",
+  "name": "Priest of Fell Rites",
+  "layout": "normal",
+  "mana_cost": "{W}{B}",
+  "cmc": 2.0,
+  "type_line": "Creature — Human Warlock",
+  "oracle_text": "{T}, Pay 3 life, Sacrifice this creature: Return target creature card from your graveyard to the battlefield. Activate only as a sorcery.\nUnearth {3}{W}{B} ({3}{W}{B}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)",
+  "colors": [
+   "B",
+   "W"
+  ],
+  "color_identity": [
+   "B",
+   "W"
+  ]
+ },
+ {
+  "id": "2edcde06-b326-476e-884d-770187c785fe",
+  "name": "Stitcher's Supplier",
+  "layout": "normal",
+  "mana_cost": "{B}",
+  "cmc": 1.0,
+  "type_line": "Creature — Zombie",
+  "oracle_text": "When this creature enters or dies, mill three cards. (Put the top three cards of your library into your graveyard.)",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
+ },
+ {
+  "id": "ae35b6c5-3bfd-483e-9c85-58629b717d7f",
+  "name": "Collective Brutality",
+  "layout": "normal",
+  "mana_cost": "{1}{B}",
+  "cmc": 2.0,
+  "type_line": "Sorcery",
+  "oracle_text": "Escalate—Discard a card. (Pay this cost for each mode chosen beyond the first.)\nChoose one or more —\n• Target opponent reveals their hand. You choose an instant or sorcery card from it. That player discards that card.\n• Target creature gets -2/-2 until end of turn.\n• Target opponent loses 2 life and you gain 2 life.",
+  "colors": [
+   "B"
+  ],
+  "color_identity": [
+   "B"
+  ]
  }
 ]
