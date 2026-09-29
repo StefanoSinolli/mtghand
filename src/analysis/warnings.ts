@@ -3,7 +3,7 @@
  */
 
 import type { DeckAnalysis } from './analyze';
-import { landColors } from './manaBase';
+import { landColors, type LandTotals } from './manaBase';
 import { keyColors, type ManaSymbolColor } from './manaCost';
 
 export type WarningSeverity = 'error' | 'warning' | 'info';
@@ -30,6 +30,22 @@ export const colorLabel = (key: string) => keyColors(key).map((c) => COLOR_NAMES
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const formatSources = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+/**
+ * Terre vere e fonti extra (MDFC e landcycler) tenute distinte:
+ * "16 terre + 4 fonti extra" invece di 18 terre "equivalenti"
+ */
+export const splitLands = (lands: LandTotals) => {
+  const extra = lands.mdfc + lands.landcyclers;
+  return { real: lands.playable - extra, extra, equivalent: lands.weighted };
+};
+
+export const describeLands = (lands: LandTotals) => {
+  const { real, extra, equivalent } = splitLands(lands);
+  return extra === 0
+    ? `${formatSources(equivalent)} terre`
+    : `${real} terre + ${extra} ${extra === 1 ? 'fonte extra' : 'fonti extra'} (valgono ${formatSources(equivalent)})`;
+};
 
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 
@@ -136,10 +152,10 @@ export const buildWarnings = (a: DeckAnalysis): Warning[] => {
     warnings.push({
       id: 'land-count',
       severity: Math.abs(delta) >= 2 ? 'warning' : 'info',
-      title: `${delta < 0 ? 'Poche' : 'Troppe'} terre: ne hai ${formatSources(current)}, ne servono circa ${recommended.toFixed(1)}`,
+      title: `${delta < 0 ? 'Poche' : 'Troppe'} terre: hai ${describeLands(a.lands)}, ne servono circa ${recommended.toFixed(1)}`,
       detail: [
         `Formula di Karsten con costo medio ${averageManaValue.toFixed(2)} e ${a.landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0)} pescate/ramp economici.`,
-        a.lands.landcyclers > 0 && `Le ${a.lands.landcyclers} carte con landcycling contano come mezza terra.`,
+        (a.lands.landcyclers > 0 || a.lands.mdfc > 0) && 'Le fonti extra (landcycling e MDFC) contano come mezza terra.',
         a.landCount.costReduced.length > 0 &&
           `Costo effettivo stimato per ${a.landCount.costReduced.map((c) => `${c.name} (${c.printed}→${c.effective})`).join(', ')}.`,
       ]

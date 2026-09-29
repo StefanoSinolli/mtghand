@@ -83,7 +83,8 @@ export default function EditorPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
         <div className="min-w-0 space-y-6">
-          <Panel>
+          {/* z-20: i suggerimenti della ricerca devono stare sopra i pannelli successivi */}
+          <Panel className="relative z-20">
             <div className="grid gap-4 md:grid-cols-[1fr_1.4fr]">
               <label className="block">
                 <span className="text-sm font-semibold text-stone-300">Nome</span>

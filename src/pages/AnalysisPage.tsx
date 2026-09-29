@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { analyzeDeck, type DeckAnalysis } from '../analysis/analyze';
 import { applyBasicChanges } from '../analysis/applyProposal';
-import { colorLabel } from '../analysis/warnings';
+import { colorLabel, describeLands, splitLands } from '../analysis/warnings';
 import BasicsProposal from '../components/analysis/BasicsProposal';
 import ColorSources from '../components/analysis/ColorSources';
 import OpeningHandChart from '../components/analysis/OpeningHandChart';
@@ -75,6 +75,7 @@ function Summary({ analysis }: { analysis: DeckAnalysis }) {
         : { text: 'Mana base solida', tone: 'text-emerald-300 border-emerald-400/40' };
 
   const delta = analysis.lands.weighted - analysis.landCount.recommended;
+  const lands = splitLands(analysis.lands);
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -83,9 +84,18 @@ function Summary({ analysis }: { analysis: DeckAnalysis }) {
         <p className="text-xs text-stone-400">Esito dell'analisi</p>
       </div>
       <SummaryStat
-        value={num(analysis.lands.weighted)}
-        label="Terre"
-        hint={`consigliate ${analysis.landCount.recommended.toFixed(1)}${Math.abs(delta) >= 1 ? (delta > 0 ? ' ↓' : ' ↑') : ' ✓'}`}
+        value={
+          lands.extra > 0 ? (
+            <>
+              {lands.real}
+              <span className="text-lg text-stone-400"> + {lands.extra}</span>
+            </>
+          ) : (
+            num(lands.equivalent)
+          )
+        }
+        label={lands.extra > 0 ? 'Terre + fonti extra' : 'Terre'}
+        hint={`${lands.extra > 0 ? `valgono ${num(lands.equivalent)}, ` : ''}consigliate ${analysis.landCount.recommended.toFixed(1)}${Math.abs(delta) >= 1 ? (delta > 0 ? ' ↓' : ' ↑') : ' ✓'}`}
       />
       <SummaryStat value={analysis.landCount.averageManaValue.toFixed(2)} label="Costo medio" />
       <SummaryStat value={pct(analysis.openingHand.keepable)} label="Mani con 2–5 terre" />
@@ -93,7 +103,7 @@ function Summary({ analysis }: { analysis: DeckAnalysis }) {
   );
 }
 
-function SummaryStat({ value, label, hint }: { value: string; label: string; hint?: string }) {
+function SummaryStat({ value, label, hint }: { value: ReactNode; label: string; hint?: string }) {
   return (
     <div className="glass rounded-2xl p-4">
       <p className="text-2xl font-bold text-stone-50 tabular-nums">{value}</p>
@@ -134,11 +144,11 @@ function Proposals({ analysis }: { analysis: DeckAnalysis }) {
     <Panel title="Terre base consigliate" subtitle="Le terre non-base restano invariate">
       {optimizer.changes.length === 0 ? (
         <p className="text-stone-300">
-          Con {num(optimizer.landCount)} terre la distribuzione attuale delle base è già la migliore possibile.
+          Con {describeLands(analysis.lands)} la distribuzione attuale delle base è già la migliore possibile.
         </p>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-stone-300">A parità di terre ({num(optimizer.landCount)}):</p>
+          <p className="text-sm text-stone-300">A parità di terre ({describeLands(analysis.lands)}):</p>
           <BasicsProposal proposal={optimizer} />
           <Button variant="primary" onClick={apply}>
             Applica al mazzo
@@ -170,17 +180,24 @@ function Proposals({ analysis }: { analysis: DeckAnalysis }) {
 function LandCount({ analysis }: { analysis: DeckAnalysis }) {
   const { landCount, lands, tapped } = analysis;
   const cheap = landCount.cheapDrawOrRamp.reduce((s, c) => s + c.quantity, 0);
-  const halfLands = lands.mdfc + lands.landcyclers;
+  const { real, extra, equivalent } = splitLands(lands);
 
   return (
     <Panel title="Numero di terre">
       <div className="flex items-end gap-6">
         <div>
-          <p className="text-4xl font-bold text-stone-50 tabular-nums">{num(lands.weighted)}</p>
+          <p className="text-4xl font-bold text-stone-50 tabular-nums">
+            {extra > 0 ? (
+              <>
+                {real}
+                <span className="text-2xl text-stone-400"> + {extra}</span>
+              </>
+            ) : (
+              num(equivalent)
+            )}
+          </p>
           <p className="text-xs text-stone-400">
-            {halfLands > 0
-              ? `effettive (${lands.playable - halfLands} terre + ${halfLands} × ½)`
-              : 'nel mazzo'}
+            {extra > 0 ? `terre + fonti extra (valgono ${num(equivalent)})` : 'nel mazzo'}
           </p>
         </div>
         <div>
