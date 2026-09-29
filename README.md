@@ -20,6 +20,8 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
   carte bannate e partner
 - ✅ Soglie delle fonti colorate calcolate con il modello completo di Karsten (strategia di mulligan
   inclusa): riproduce le sue tabelle 2022 per 40, 60 e 99 carte
+- ✅ Condivisione via link: il mazzo è compresso nell'URL (nessun server); chi lo apre può provarlo,
+  analizzarlo e salvarlo tra i suoi mazzi
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
 
@@ -109,6 +111,15 @@ src/
 Rotte: `#/` mazzi · `#/import` · `#/new` · `#/deck/:id` (panoramica) · `#/deck/:id/hand` · `#/deck/:id/analysis` · `#/deck/:id/edit`.
 
 La build (`npm run build`) usa percorsi relativi: la cartella `dist/` funziona anche servita da MAMP in una sottocartella.
+
+## 🌍 Pubblicazione su Vercel
+
+1. Su [vercel.com](https://vercel.com) → **Add New… → Project** → importa il repository `StefanoSinolli/mtghand`
+2. Framework preset: **Vite** (build `npm run build`, output `dist`): i valori proposti vanno bene
+3. **Deploy**. Da quel momento ogni push su `main` ripubblica l'app automaticamente
+
+Il router usa gli hash (`#/deck/…`), quindi non serve nessuna configurazione di rewrite.
+I link di condivisione usano l'indirizzo da cui è aperta l'app: condividili dalla versione pubblicata.
 
 ## 🔮 Prossimi Sviluppi
 

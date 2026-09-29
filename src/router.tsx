@@ -1,32 +1,33 @@
-import { createHashRouter } from 'react-router';
+import type { ComponentType } from 'react';
+import { createHashRouter, type RouteObject } from 'react-router';
 import AppShell from './components/layout/AppShell';
 import DeckListPage from './pages/DeckListPage';
-import ImportPage from './pages/ImportPage';
-import EditorPage from './pages/EditorPage';
 import DeckLayout from './pages/DeckLayout';
 import DeckOverviewPage from './pages/DeckOverviewPage';
-import HandPage from './pages/HandPage';
-import AnalysisPage from './pages/AnalysisPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Hash router: funziona anche servendo la build statica da una sottocartella (es. MAMP)
+// Pagine pesanti (analisi, animazioni, editor) caricate solo quando servono
+const lazy = (load: () => Promise<{ default: ComponentType }>): Pick<RouteObject, 'lazy'> => ({
+  lazy: async () => ({ Component: (await load()).default }),
+});
+
+const deckPages = (editable: boolean): RouteObject[] => [
+  { index: true, element: <DeckOverviewPage /> },
+  { path: 'hand', ...lazy(() => import('./pages/HandPage')) },
+  { path: 'analysis', ...lazy(() => import('./pages/AnalysisPage')) },
+  ...(editable ? [{ path: 'edit', ...lazy(() => import('./pages/EditorPage')) }] : []),
+];
+
+// Hash router: funziona anche servendo la build statica da una sottocartella (es. MAMP) o da Vercel
 export const router = createHashRouter([
   {
     element: <AppShell />,
     children: [
       { index: true, element: <DeckListPage /> },
-      { path: 'import', element: <ImportPage /> },
-      { path: 'new', element: <EditorPage /> },
-      {
-        path: 'deck/:id',
-        element: <DeckLayout />,
-        children: [
-          { index: true, element: <DeckOverviewPage /> },
-          { path: 'hand', element: <HandPage /> },
-          { path: 'analysis', element: <AnalysisPage /> },
-          { path: 'edit', element: <EditorPage /> },
-        ],
-      },
+      { path: 'import', ...lazy(() => import('./pages/ImportPage')) },
+      { path: 'new', ...lazy(() => import('./pages/EditorPage')) },
+      { path: 'deck/:id', element: <DeckLayout />, children: deckPages(true) },
+      { path: 's/:payload', ...lazy(() => import('./pages/SharedDeckLayout')), children: deckPages(false) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
