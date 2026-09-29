@@ -6,6 +6,7 @@ import { isPlaceholder, type DisplayCard } from '../types';
 import CardImage from '../components/cards/CardImage';
 import CardModal from '../components/cards/CardModal';
 import DeckList from '../components/cards/DeckList';
+import RolesPanel from '../components/deck/RolesPanel';
 import ManaCurve from '../components/charts/ManaCurve';
 import Panel from '../components/ui/Panel';
 import { ButtonLink } from '../components/ui/Button';
@@ -59,6 +60,10 @@ export default function DeckOverviewPage() {
               ))}
             </div>
           </Panel>
+        )}
+
+        {deck.format === 'commander' && (
+          <RolesPanel deck={deck} cards={cards} onHover={setPreview} onSelect={setDetails} />
         )}
 
         <Panel title={deck.format === 'commander' ? `Mazzo · ${countCards(deck.main)}` : `Main deck · ${summary.mainCount}`}>

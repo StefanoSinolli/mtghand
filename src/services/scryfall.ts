@@ -11,7 +11,7 @@ const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 giorni
 const CACHE_PREFIX = 'card:';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
-const REQUEST_GAP = 100; // Scryfall chiede ~10 richieste/secondo al massimo
+export const REQUEST_GAP = 100; // Scryfall chiede ~10 richieste/secondo al massimo
 const COLLECTION_CHUNK = 75; // limite di identifiers per /cards/collection
 
 interface CachedCard {
@@ -21,7 +21,7 @@ interface CachedCard {
 
 const memoryCache = new Map<string, CachedCard>();
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Nome normalizzato per il confronto: faccia frontale, minuscolo, senza accenti.
@@ -35,7 +35,7 @@ export const normalizeName = (name: string) =>
     .toLowerCase()
     .trim();
 
-const fetchWithRetry = async (
+export const fetchWithRetry = async (
   url: string,
   options: RequestInit = {},
   retries = MAX_RETRIES,
@@ -51,8 +51,8 @@ const fetchWithRetry = async (
       throw new Error('Rate limit raggiunto');
     }
 
-    // 404 è una risposta valida (carta non trovata): niente retry
-    if (!response.ok && response.status !== 404) {
+    // Errori 4xx (carta non trovata, ricerca non valida): riprovare non serve, decide il chiamante
+    if (!response.ok && (response.status < 400 || response.status >= 500)) {
       throw new Error(`HTTP ${response.status}`);
     }
 
@@ -192,6 +192,7 @@ export const fetchCards = async (names: string[]): Promise<FetchCardsResult> => 
       }),
     });
 
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = (await response.json()) as {
       data: ScryfallCard[];
       not_found?: Array<{ name: string }>;

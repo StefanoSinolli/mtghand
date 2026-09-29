@@ -24,6 +24,8 @@ const deckPages = (editable: boolean): RouteObject[] => [
 export const router = createHashRouter([
   {
     element: <AppShell />,
+    // mentre si carica una pagina "pigra" al primo avvio
+    hydrateFallbackElement: <p className="py-24 text-center text-stone-500">Caricamento…</p>,
     children: [
       { index: true, element: <DeckListPage /> },
       { path: 'import', ...lazy(() => import('./pages/ImportPage')) },

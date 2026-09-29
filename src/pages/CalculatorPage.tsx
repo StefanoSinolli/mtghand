@@ -12,6 +12,8 @@ import { rulesFor } from '../formats';
 import { getKeepRule } from '../store/mulliganLog';
 import { CARD_TYPES, TYPE_LABELS, type CardType } from '../utils/deckSummary';
 import { useDeckContext } from './deckContext';
+import { useCardRoles } from '../hooks/useCardRoles';
+import { ROLE_LABELS, ROLES, type CardRole } from '../services/roles';
 
 const TURNS = 10;
 const MAX_CONDITIONS = 3;
@@ -20,7 +22,7 @@ const BAR_COLOR = '#b08a2a';
 
 const OPERATORS: Record<Operator, string> = { atLeast: 'almeno', exactly: 'esattamente', atMost: 'al massimo' };
 const GROUP_KINDS: Record<CardGroup['kind'], string> = {
-  cards: 'queste carte',
+  cards: 'carte o ruoli',
   lands: 'terre',
   type: 'carte di tipo',
   color: 'fonti di',
@@ -57,8 +59,10 @@ const TYPE_SINGULAR: Record<CardType, string> = {
 const describeGroup = (g: CardGroup, n: number) => {
   const one = n === 1;
   switch (g.kind) {
-    case 'cards':
-      return g.names.length === 0 ? '(scegli le carte)' : g.names.length === 1 ? g.names[0] : `tra ${g.names.join(', ')}`;
+    case 'cards': {
+      const items = [...g.names, ...(g.roles ?? []).map((r) => ROLE_LABELS[r].toLowerCase())];
+      return items.length === 0 ? '(scegli carte o ruoli)' : items.length === 1 ? items[0] : `tra ${items.join(', ')}`;
+    }
     case 'lands':
       return one ? 'terra' : 'terre';
     case 'type':
@@ -89,6 +93,14 @@ const PRESETS: Preset[] = [
   },
   { label: '3 terre entro il T3', turn: 3, conditions: () => [{ op: 'atLeast', n: 3, group: { kind: 'lands' } }] },
   {
+    label: 'Drain + sacrifice outlet entro il T4',
+    turn: 4,
+    conditions: () => [
+      { op: 'atLeast', n: 1, group: { kind: 'cards', names: [], roles: ['drain'] } },
+      { op: 'atLeast', n: 1, group: { kind: 'cards', names: [], roles: ['sacOutlet'] } },
+    ],
+  },
+  {
     label: 'Pezzi della combo entro il T4',
     turn: 4,
     conditions: (spells) => [
@@ -107,6 +119,9 @@ export default function CalculatorPage() {
   const [withMulligan, setWithMulligan] = useState(false);
   const drawOnFirstTurn = rules.drawOnFirstTurn || onTheDraw;
 
+  const mainNames = useMemo(() => deck.main.map((e) => e.name), [deck.main]);
+  const tagged = useCardRoles(mainNames);
+
   const { profiles, calc, deckColors } = useMemo(() => {
     const { profiles, commanderProfiles } = buildProfiles(deck, cards);
     const colors = new Set<ManaSymbolColor>(
@@ -114,8 +129,17 @@ export default function CalculatorPage() {
         .filter((r) => !r.alternative && r.key.length === 1)
         .flatMap((r) => keyColors(r.key)),
     );
-    return { profiles, calc: buildCalcCards(profiles), deckColors: [...colors] };
-  }, [deck, cards]);
+    return { profiles, calc: buildCalcCards(profiles, tagged.roles), deckColors: [...colors] };
+  }, [deck, cards, tagged.roles]);
+
+  // ruoli presenti nel mazzo, con il numero di carte
+  const roleCounts = useMemo(
+    () =>
+      ROLES.map((r) => ({ ...r, count: calc.filter((c) => c.roles.includes(r.id)).reduce((s, c) => s + c.quantity, 0) })).filter(
+        (r) => r.count > 0,
+      ),
+    [calc],
+  );
 
   const spellNames = useMemo(
     () => calc.filter((c) => !c.isLand).sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name)).map((c) => c.name),
@@ -130,12 +154,13 @@ export default function CalculatorPage() {
     return input.withMulligan
       ? mulliganCurve(profiles, input.conditions, TURNS, {
           rule: getKeepRule(deck.id),
+          roles: tagged.roles,
           freeFirstMulligan: rules.freeFirstMulligan,
           drawOnFirstTurn: input.drawOnFirstTurn,
           deckColors,
         })
       : exactCurve(calc, input.conditions, TURNS, input.drawOnFirstTurn);
-  }, [calc, profiles, input, deck.id, rules.freeFirstMulligan, deckColors]);
+  }, [calc, profiles, input, deck.id, rules.freeFirstMulligan, deckColors, tagged.roles]);
 
   if (loading && cards.size === 0) {
     return <p className="animate-pulse py-24 text-center text-stone-400">Carico le carte…</p>;
@@ -172,6 +197,8 @@ export default function CalculatorPage() {
                 key={i}
                 condition={c}
                 allNames={allNames}
+                roleCounts={roleCounts}
+                rolesLoading={tagged.loading}
                 types={types}
                 deckColors={deckColors}
                 onChange={(next) => update(i, next)}
@@ -261,6 +288,8 @@ export default function CalculatorPage() {
 interface ConditionRowProps {
   condition: Condition;
   allNames: string[];
+  roleCounts: Array<{ id: CardRole; label: string; count: number }>;
+  rolesLoading: boolean;
   types: CardType[];
   deckColors: ManaSymbolColor[];
   onChange: (c: Condition) => void;
@@ -269,7 +298,7 @@ interface ConditionRowProps {
 
 const selectClass = 'h-9 rounded-lg border border-white/10 bg-felt-900 px-2 text-sm text-stone-100';
 
-function ConditionRow({ condition, allNames, types, deckColors, onChange, onRemove }: ConditionRowProps) {
+function ConditionRow({ condition, allNames, roleCounts, rolesLoading, types, deckColors, onChange, onRemove }: ConditionRowProps) {
   const { op, n, group } = condition;
   const colors: ManaSymbolColor[] = deckColors.length > 0 ? deckColors : ['W', 'U', 'B', 'R', 'G'];
 
@@ -349,6 +378,18 @@ function ConditionRow({ condition, allNames, types, deckColors, onChange, onRemo
 
       {group.kind === 'cards' && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {(group.roles ?? []).map((role) => (
+            <span key={role} className="flex items-center gap-1 rounded-full border border-gold-400/50 py-0.5 pr-1 pl-2.5 text-xs text-gold-200">
+              Ruolo: {ROLE_LABELS[role]}
+              <button
+                onClick={() => onChange({ ...condition, group: { ...group, roles: (group.roles ?? []).filter((r) => r !== role) } })}
+                aria-label={`Togli ${ROLE_LABELS[role]}`}
+                className="cursor-pointer rounded-full px-1 hover:bg-black/30"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
           {group.names.map((name) => (
             <span key={name} className="flex items-center gap-1 rounded-full bg-gold-400/15 py-0.5 pr-1 pl-2.5 text-xs text-gold-100">
               {name}
@@ -363,17 +404,37 @@ function ConditionRow({ condition, allNames, types, deckColors, onChange, onRemo
           ))}
           <select
             value=""
-            onChange={(e) => e.target.value && onChange({ ...condition, group: { ...group, names: [...group.names, e.target.value] } })}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (!value) return;
+              if (value.startsWith('role:')) {
+                const role = value.slice(5) as CardRole;
+                onChange({ ...condition, group: { ...group, roles: [...(group.roles ?? []), role] } });
+              } else {
+                onChange({ ...condition, group: { ...group, names: [...group.names, value] } });
+              }
+            }}
             className={`${selectClass} h-8 text-xs`}
           >
-            <option value="">+ aggiungi carta…</option>
-            {allNames
-              .filter((name) => !group.names.includes(name))
-              .map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
+            <option value="">+ aggiungi carta o ruolo…</option>
+            <optgroup label={rolesLoading ? 'Ruoli (in caricamento da Scryfall…)' : 'Ruoli'}>
+              {roleCounts
+                .filter((r) => !(group.roles ?? []).includes(r.id))
+                .map((r) => (
+                  <option key={r.id} value={`role:${r.id}`}>
+                    {r.label} ({r.count} {r.count === 1 ? 'carta' : 'carte'})
+                  </option>
+                ))}
+            </optgroup>
+            <optgroup label="Carte">
+              {allNames
+                .filter((name) => !group.names.includes(name))
+                .map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+            </optgroup>
           </select>
         </div>
       )}

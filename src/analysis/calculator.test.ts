@@ -89,3 +89,28 @@ describe('calcolatore con mulligan', () => {
     expect(sim).toBeGreaterThan(exact);
   });
 });
+
+describe('ruoli nel calcolatore', () => {
+  const text = '4 Counterspell\n4 Opt\n4 Izzet Signet\n4 Reanimate\n20 Lightning Bolt\n24 Island';
+  const ps = buildProfiles(deckFrom(text), fixtureCards).profiles;
+  const tagged = new Map([
+    ['counterspell', ['counterspell' as const]],
+    ['opt', ['cardAdvantage' as const]],
+  ]);
+  const cards = buildCalcCards(ps, tagged);
+
+  it('unisce etichette di Scryfall e ruoli riconosciuti dal testo', () => {
+    const roles = Object.fromEntries(cards.map((c) => [c.name, c.roles]));
+    expect(roles['Counterspell']).toEqual(['counterspell']);
+    expect(roles['Izzet Signet']).toEqual(['ramp']); // fonte di mana: ramp anche senza etichetta
+    expect(roles['Reanimate']).toEqual(['reanimate']);
+    expect(roles['Lightning Bolt']).toEqual([]);
+  });
+
+  it('carte e ruoli nello stesso gruppo contano insieme', () => {
+    const byRole = exactProbability(cards, [atLeast(1, { kind: 'cards', names: [], roles: ['counterspell', 'cardAdvantage'] })], 7);
+    expect(byRole).toBeCloseTo(hypergeometricAtLeast(60, 8, 7, 1), 10);
+    const mixed = exactProbability(cards, [atLeast(1, { kind: 'cards', names: ['Reanimate'], roles: ['ramp'] })], 7);
+    expect(mixed).toBeCloseTo(hypergeometricAtLeast(60, 8, 7, 1), 10);
+  });
+});

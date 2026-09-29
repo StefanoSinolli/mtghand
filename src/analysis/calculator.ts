@@ -12,9 +12,12 @@ import { drawKeptHand, type KeepRule } from './mulliganStats';
 import { comb } from './probability';
 import { buildLibrary, type SimCard } from './simulate';
 import { primaryType, type CardType } from '../utils/deckSummary';
+import { normalizeName } from '../services/scryfall';
+import type { CardRole } from '../services/roles';
 
 export type CardGroup =
-  | { kind: 'cards'; names: string[] }
+  /** Carte scelte e/o ruoli (tutor, drain…): conta chi rientra in almeno uno */
+  | { kind: 'cards'; names: string[]; roles?: CardRole[] }
   | { kind: 'lands' }
   | { kind: 'type'; type: CardType }
   | { kind: 'color'; color: ManaSymbolColor }
@@ -38,9 +41,21 @@ export interface CalcCard {
   landColors: ManaSymbolColor[];
   /** Costo della magia (null per le terre) */
   manaValue: number | null;
+  roles: CardRole[];
 }
 
-export const buildCalcCards = (profiles: CardProfile[]): CalcCard[] =>
+/**
+ * Ruoli di una carta: etichette di Scryfall più quelli che l'app riconosce dal testo
+ * (utile per le carte nuove non ancora etichettate)
+ */
+export const rolesOf = (p: CardProfile, tagged?: Map<string, CardRole[]>): CardRole[] => {
+  const roles = new Set(tagged?.get(normalizeName(p.name)) ?? []);
+  if (p.nonLandSource) roles.add('ramp');
+  if (p.reanimates) roles.add('reanimate');
+  return [...roles];
+};
+
+export const buildCalcCards = (profiles: CardProfile[], tagged?: Map<string, CardRole[]>): CalcCard[] =>
   profiles.map((p) => ({
     name: p.name,
     quantity: p.quantity,
@@ -48,12 +63,13 @@ export const buildCalcCards = (profiles: CardProfile[]): CalcCard[] =>
     type: primaryType(p.card),
     landColors: p.land ? [...landColors(p.land, profiles)] : [],
     manaValue: p.land && !p.land.isMdfc ? null : (p.spells[0]?.manaValue ?? p.card.cmc),
+    roles: rolesOf(p, tagged),
   }));
 
 export const inGroup = (card: CalcCard, group: CardGroup) => {
   switch (group.kind) {
     case 'cards':
-      return group.names.includes(card.name);
+      return group.names.includes(card.name) || (group.roles ?? []).some((r) => card.roles.includes(r));
     case 'lands':
       return card.isLand;
     case 'type':
@@ -123,6 +139,8 @@ export const exactCurve = (deck: CalcCard[], conditions: Condition[], turns: num
 
 export interface MulliganCurveOptions {
   rule: KeepRule;
+  /** Ruoli delle carte (etichette di Scryfall) */
+  roles?: Map<string, CardRole[]>;
   freeFirstMulligan: boolean;
   drawOnFirstTurn: boolean;
   deckColors: ManaSymbolColor[];
@@ -138,9 +156,9 @@ export const mulliganCurve = (
   profiles: CardProfile[],
   conditions: Condition[],
   turns: number,
-  { rule, freeFirstMulligan, drawOnFirstTurn, deckColors, games = 10000, random = Math.random }: MulliganCurveOptions,
+  { rule, roles, freeFirstMulligan, drawOnFirstTurn, deckColors, games = 10000, random = Math.random }: MulliganCurveOptions,
 ) => {
-  const calc = new Map(buildCalcCards(profiles).map((c) => [c.name, c]));
+  const calc = new Map(buildCalcCards(profiles, roles).map((c) => [c.name, c]));
   const library = buildLibrary(profiles);
   // appartenenza ai gruppi per nome, calcolata una volta sola
   const membership = new Map(

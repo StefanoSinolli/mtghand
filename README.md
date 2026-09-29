@@ -30,7 +30,10 @@ Tool web per simulare la mano iniziale di Magic: The Gathering, con supporto per
 - ✅ Statistiche sui mulligan: regola di keep modificabile (terre per 7/6/5 carte, colori, magie
   economiche), simulazione di 10.000 mani con i motivi dei mulligan e storico delle tue decisioni
   confrontate con la regola
-- ✅ Calcolatore di probabilità: fino a 3 condizioni (carte, terre, tipi, fonti di un colore, costo),
+- ✅ Ruoli delle carte (ramp, pescata, rimozione, board wipe, counterspell, tutor, reanimazione,
+  sacrifice outlet, drain, danno al giocatore) dalle etichette della community di Scryfall (Tagger):
+  riepilogo nella Panoramica dei mazzi Commander e condizioni per ruolo nel calcolatore
+- ✅ Calcolatore di probabilità: fino a 3 condizioni (carte, ruoli, terre, tipi, fonti di un colore, costo),
   calcolo esatto con l'ipergeometrica multivariata o simulazione con il mulligan, grafico turno per turno
 - ✅ Salvataggio mazzi in LocalStorage
 - ✅ Gestione multipli mazzi, editor con ricerca Scryfall, panoramica con curva di mana
@@ -113,7 +116,7 @@ src/
 ├── game/playtest.ts       # Prova di gioco (turni, terre, magie, annulla)
 ├── hooks/                 # useDeckCards/useCards, useSimulation, useElementWidth
 ├── pages/                 # Lista mazzi, Import, Editor, Panoramica, Mano, Analisi
-├── services/              # deckStorage (LocalStorage), scryfall (API + cache IndexedDB)
+├── services/              # deckStorage (LocalStorage), scryfall (API + cache), roles (etichette Tagger)
 ├── store/decks.ts         # Store dei mazzi (useSyncExternalStore)
 ├── utils/                 # Parser decklist, riepilogo mazzo, editing, shuffle
 ├── router.tsx             # Rotte
